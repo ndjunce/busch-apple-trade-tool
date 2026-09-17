@@ -36,6 +36,11 @@
   .loading{color:var(--mut);padding:40px 0;text-align:center}
   .err{color:var(--red);border:1px solid var(--red);border-radius:9px;padding:12px;margin:10px 0;font-size:13px}
 
+  /* explainer note */
+  .explain{border:1px solid var(--line);border-radius:11px;background:var(--panel);
+           padding:12px 14px;margin-bottom:14px;font-size:12.5px;color:var(--mut);line-height:1.55}
+  .explain b{color:var(--txt)}
+
   /* player image chain: headshot -> team logo -> initial */
   .pimg-wrap{width:30px;height:30px;flex:0 0 30px;display:inline-flex;align-items:center;justify-content:center}
   .pimg{width:30px;height:30px;border-radius:50%;object-fit:cover;object-position:top center;background:var(--panel2);display:block}
@@ -44,6 +49,8 @@
            font-size:13px;font-weight:800;background:var(--panel2);border:1px solid var(--line)}
   .pos-QB{color:#f0913e}.pos-RB{color:#33e08a}.pos-WR{color:#4aa8ff}.pos-TE{color:#b878ff}
   .pos-K{color:#95a5a6}.pos-DEF{color:#ff6060}.pos-DL{color:#e0679a}.pos-LB{color:#67c7e0}.pos-DB{color:#c7e067}
+  .pick-ic{width:30px;height:30px;flex:0 0 30px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;
+           font-size:13px;font-weight:800;background:var(--panel2);border:1px solid var(--line);color:var(--gold)}
 
   /* splash / team picker */
   .splash-h{font-size:15px;font-weight:800;margin:6px 0 10px}
@@ -94,37 +101,55 @@
   .pname{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
   .ppos{color:var(--mut);font-size:11px;font-weight:700;margin-left:6px}
   .psal{font-weight:800;font-variant-numeric:tabular-nums;min-width:40px;text-align:right}
+  .subhd{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--mut);
+         padding:10px 0 2px;border-top:1px solid var(--line);margin-top:4px}
+  .pick-sal{color:var(--mut);font-weight:700;font-size:12px}
 
-  /* trade builder */
-  .trade-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-  @media(max-width:720px){.trade-grid{grid-template-columns:1fr}}
-  .side{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:14px}
-  .side h3{margin:0 0 10px;font-size:14px;font-weight:800}
-  select.teamsel,input.psearch{width:100%;background:var(--panel2);color:var(--txt);border:1px solid var(--line);
-                 border-radius:8px;padding:8px 10px;font-size:13px;font-weight:700;margin-bottom:8px}
-  input.psearch{font-weight:500}
-  input.psearch:focus,select.teamsel:focus{outline:none;border-color:var(--accent)}
+  /* trade builder (multi-team) */
+  .trade-teams{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:8px}
+  .tt-chip{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;
+           background:var(--panel);cursor:pointer;user-select:none;font-size:13px;font-weight:700}
+  .tt-chip.on{border-color:var(--accent);background:rgba(74,168,255,.10)}
+  .tt-chip .oav{width:26px;height:26px;flex:0 0 26px;border-radius:50%;object-fit:cover;background:var(--panel2)}
+  .tt-note{color:var(--mut);font-size:12px;margin:2px 0 14px}
+
+  .side{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:14px;margin-bottom:12px}
+  .side h3{margin:0 0 8px;font-size:14px;font-weight:800;display:flex;align-items:center;gap:8px}
+  .side h3 .oav{width:26px;height:26px;border-radius:50%;object-fit:cover;background:var(--panel2)}
+  input.psearch{width:100%;background:var(--panel2);color:var(--txt);border:1px solid var(--line);
+                 border-radius:8px;padding:8px 10px;font-size:13px;margin-bottom:8px}
+  input.psearch:focus{outline:none;border-color:var(--accent)}
   .side .ctrls{padding:0 0 8px}
-  .picklist{max-height:300px;overflow-y:auto;border:1px solid var(--line);border-radius:8px;padding:6px}
-  .pick{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:6px;cursor:pointer;font-size:13px}
+  .picklist{max-height:320px;overflow-y:auto;border:1px solid var(--line);border-radius:8px;padding:6px}
+  .pick{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:6px;font-size:13px}
   .pick:hover{background:var(--panel2)}
-  .pick input{accent-color:var(--accent);cursor:pointer;flex:0 0 auto}
-  .pick .nm{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  .pick>input[type=checkbox]{accent-color:var(--accent);cursor:pointer;flex:0 0 auto}
+  .pick .nm{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;cursor:pointer}
   .pick .amt{font-weight:800;font-variant-numeric:tabular-nums;color:var(--mut);flex:0 0 auto}
+  .pick.sel{background:rgba(74,168,255,.06)}
   .pick.sel .amt{color:var(--txt)}
+  .dest{flex:0 0 auto;background:var(--panel2);color:var(--txt);border:1px solid var(--accent);border-radius:7px;
+        padding:3px 6px;font-size:11.5px;font-weight:700;max-width:120px;cursor:pointer}
+  .dest:focus{outline:none}
 
-  .result{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:16px;margin-top:14px}
-  .rcols{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-  @media(max-width:620px){.rcols{grid-template-columns:1fr;gap:14px}}
-  .rline{display:grid;grid-template-columns:1fr auto;gap:10px;padding:7px 0;font-size:14px;border-top:1px solid var(--line)}
-  .rline:first-child{border-top:none}
+  .result{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:16px;margin-top:6px}
+  .rcols{display:grid;gap:16px}
+  .rcols.n2{grid-template-columns:repeat(2,1fr)}
+  .rcols.n3{grid-template-columns:repeat(3,1fr)}
+  .rcols.n4{grid-template-columns:repeat(4,1fr)}
+  @media(max-width:820px){.rcols.n3,.rcols.n4{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:560px){.rcols.n2,.rcols.n3,.rcols.n4{grid-template-columns:1fr}}
+  .rteam{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+  .rteam.over{border-color:var(--red)}
+  .rteam .rt-name{font-weight:800;font-size:13.5px;margin-bottom:6px}
+  .rline{display:grid;grid-template-columns:1fr auto;gap:8px;padding:4px 0;font-size:12.5px}
   .rline .lab{color:var(--mut)}
   .rline .val{font-weight:800;font-variant-numeric:tabular-nums}
-  .rbig{font-size:15px;font-weight:800}
+  .rt-after{font-size:14px;font-weight:800;font-variant-numeric:tabular-nums;padding-top:6px;border-top:1px solid var(--line);margin-top:4px}
   .verdict{margin-top:12px;padding:12px;border-radius:9px;font-weight:800;font-size:14px;text-align:center}
   .verdict.ok{background:rgba(51,224,138,.10);color:var(--grn);border:1px solid var(--grn)}
   .verdict.bad{background:rgba(255,96,96,.10);color:var(--red);border:1px solid var(--red)}
-  .swap-note{color:var(--mut);font-size:11.5px;margin-top:8px;text-align:center}
+  .swap-note{color:var(--mut);font-size:11.5px;margin-top:8px;text-align:center;line-height:1.5}
   .foot{color:var(--mut);font-size:11.5px;margin-top:26px;text-align:center;line-height:1.6}
   .hide{display:none}
 </style>
@@ -159,9 +184,10 @@
 <script>
 /* =============================================================================
    Busch Apple Salary & Trade Tool — standalone, public Sleeper API only.
-   v2: splash + 1-4 team multi-select, player images, per-team sort/filter,
-   source badge removed (salary $ kept). Resolver dollar logic unchanged from v1
-   (auction -> FAAB bid -> rookie scale -> $1 floor), verified against the audit.
+   v3: multi-team trades (per-asset destination selector), future draft capital
+   as $0 tradeable assets (9-pick baseline adjusted by traded_picks), $515 note.
+   Salary resolver dollar logic unchanged from v1 (auction -> FAAB bid -> rookie
+   scale -> $1 floor), re-verified. Picks are $0 and NEVER count toward the cap.
    Cap is a CONFIG value (365 now, flip to 515 when the vote passes).
    ============================================================================= */
 
@@ -170,8 +196,12 @@ const CAP = 365;                    // <-- one-line flip to 515 when the $515 vo
 const LEAGUE_ID = "1372256037666574336";
 const SEASON = "2026";
 const API = "https://api.sleeper.app/v1";
-// v2 cache key: slim dict now also carries espn_id + team (for images) -> bump so stale v1 caches refresh
 const PLAYERS_KEY = "busch_players_nfl_v2", PLAYERS_TS = "busch_players_nfl_ts_v2", PLAYERS_TTL = 1000*60*60*24;
+
+// future draft capital: every team starts with own 1st/2nd/3rd for these years (adjusted by traded_picks)
+const PICK_YEARS = [2027, 2028, 2029];
+const PICK_ROUNDS = [1, 2, 3];
+function roundLabel(r){ return r===1?"1st":r===2?"2nd":r===3?"3rd":`${r}th`; }
 
 const ROOKIE_SCALE = {
   "1.01":10,"1.02":10,"1.03":9,"1.04":9,"1.05":9,"1.06":8,"1.07":8,"1.08":8,"1.09":7,"1.10":7,
@@ -185,17 +215,26 @@ const OWNER = {
 const POS_ORDER = ["QB","RB","WR","TE","K","DEF","DL","LB","DB"];
 
 // ---- state ----
-let TEAMS = [];          // [{roster_id, owner, sn, avatar, players:[{pid,name,pos,amt,espnId,team}], total, room}]
+let TEAMS = [];          // [{roster_id, owner, sn, avatar, players:[...], picks:[{year,round,label,key,fromRid}], total, room}]
 let PLAYERS = null;
 let AUTO = null;
 let ACTIVE_TAB = "table";
-const SELECTED = new Set();                 // roster_ids selected on the splash (empty = splash view)
-const SORT = {};                            // per roster_id: 'sal' | 'pos' | 'name'
-const FILTER = {};                          // per roster_id: 'ALL' | position
-const TRADE = { A:{teamIdx:null, sel:new Set(), q:"", fpos:"ALL"}, B:{teamIdx:null, sel:new Set(), q:"", fpos:"ALL"} };
+const SELECTED = new Set();     // Teams tab: roster_ids or "__ALL__"
+const SORT = {};                // Teams tab per roster_id
+const FILTER = {};              // Teams tab per roster_id
+
+// Trade tab (multi-team): ordered team list + per-team search/filter + selected assets w/ destination
+let TRADE_TEAMS = [];           // ordered array of roster_ids in the trade
+const TRADE_UI = {};            // roster_id -> {q, fpos}
+// assets: Map assetKey -> { fromRid, toRid, kind:'player'|'pick', amt, label, meta }
+const TRADE_ASSETS = new Map();
 
 async function j(url){ const r = await fetch(url, {cache:"no-store"}); if(!r.ok) throw new Error(`${r.status} ${url.split("/v1/")[1]||url}`); return r.json(); }
 function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function teamByRid(rid){ return TEAMS.find(t => t.roster_id === rid) || null; }
+function ownerNameOfRid(rid){ const t = teamByRid(rid); return t ? t.owner : `#${rid}`; }
+// pick label with "(via X)" when the pick originated from a different team than the current holder
+function pickLabel(pk, holderRid){ return pk.origRid !== holderRid ? `${pk.label} (via ${esc(ownerNameOfRid(pk.origRid))})` : pk.label; }
 
 // ---- player images (headshot -> team logo -> position initial) ----
 function headshotUrl(espnId){ return `https://a.espncdn.com/i/headshots/nfl/players/full/${espnId}.png`; }
@@ -216,8 +255,9 @@ function playerImg(p){
   }
   return `<span class="pimg-wrap"><span class="pimg-fb pos-${pos}" style="display:inline-flex">${initial}</span></span>`;
 }
+function pickIcon(){ return `<span class="pick-ic">◆</span>`; }
 
-// ---- load the (big) player dictionary, cached 24h. Now keeps espn_id + team for images. ----
+// ---- players dict cached 24h (keeps espn_id + team for images) ----
 async function loadPlayers(){
   try{
     const ts = +(localStorage.getItem(PLAYERS_TS)||0), cached = localStorage.getItem(PLAYERS_KEY);
@@ -232,12 +272,43 @@ async function loadPlayers(){
   return slim;
 }
 
-// ---- build the salary maps from live Sleeper data (dollar logic identical to v1) ----
+// ---- build future draft capital per roster: 9-pick baseline, adjusted by traded_picks ----
+// Sleeper traded_picks: {season, round, roster_id (ORIGINAL owner = whose pick it is), owner_id (CURRENT owner)}.
+// A pick's IDENTITY is (year, round, originalRoster) — a team can hold multiple picks of the same year+round
+// if it acquired another team's, so we track by ORIGIN, not just year-round (a Set would collapse duplicates).
+function buildPicksByRoster(rosterIds, tradedPicks){
+  // current owner per pick identity; seed with each team owning its own picks
+  const ownerOf = {};                  // "year-round-origRid" -> current roster_id
+  for(const rid of rosterIds)
+    for(const y of PICK_YEARS) for(const r of PICK_ROUNDS) ownerOf[`${y}-${r}-${rid}`] = rid;
+  // apply trades (only tracked years/rounds): move that specific pick (identified by its ORIGINAL roster) to the new owner
+  for(const tp of (tradedPicks||[])){
+    const y = Number(tp.season), r = Number(tp.round);
+    if(!PICK_YEARS.includes(y) || !PICK_ROUNDS.includes(r)) continue;
+    const id = `${y}-${r}-${tp.roster_id}`;         // roster_id = the pick's original owner
+    if(id in ownerOf) ownerOf[id] = tp.owner_id;    // owner_id = current holder
+  }
+  // materialize per current owner; label notes origin when it's not your own (e.g. "2027 1st (via Chay)")
+  const ridOwnerName = {}; // filled by caller-independent map below via OWNER lookup at render; here we just keep origRid
+  const out = {}; rosterIds.forEach(rid => out[rid] = []);
+  for(const idKey in ownerOf){
+    const cur = ownerOf[idKey];
+    const [y, r, origRid] = idKey.split("-").map(Number);
+    if(!out[cur]) out[cur] = [];
+    out[cur].push({ year:y, round:r, origRid,
+      label:`${y} ${roundLabel(r)}`, ykey:`${y}-${r}-${origRid}`, key:`k:${cur}:${y}-${r}-${origRid}`, fromRid:cur });
+  }
+  for(const rid of rosterIds) out[rid].sort((a,b) => a.year - b.year || a.round - b.round || a.origRid - b.origRid);
+  return out;
+}
+
+// ---- build salaries + picks from live Sleeper (dollar logic identical to v1) ----
 async function buildSalaries(){
-  const [rosters, users, drafts, players] = await Promise.all([
+  const [rosters, users, drafts, tradedPicks, players] = await Promise.all([
     j(`${API}/league/${LEAGUE_ID}/rosters`),
     j(`${API}/league/${LEAGUE_ID}/users`),
     j(`${API}/league/${LEAGUE_ID}/drafts`),
+    j(`${API}/league/${LEAGUE_ID}/traded_picks`).catch(() => []),
     loadPlayers(),
   ]);
   PLAYERS = players;
@@ -265,7 +336,7 @@ async function buildSalaries(){
     }
   }
 
-  // resolver (dollar priority unchanged): auction -> FAAB bid -> rookie scale -> $1 floor
+  // resolver (unchanged): auction -> FAAB bid -> rookie scale -> $1 floor
   function sal(pid){ pid = String(pid);
     if(auc[pid] != null) return auc[pid];
     if(faab[pid] != null) return faab[pid];
@@ -273,6 +344,9 @@ async function buildSalaries(){
     return 1;
   }
   const P = pid => PLAYERS[pid] || null;
+
+  const rosterIds = rosters.map(r => r.roster_id);
+  const picksByRoster = buildPicksByRoster(rosterIds, tradedPicks);
 
   const teams = rosters.map(r => {
     const u = uById[r.owner_id] || {};
@@ -283,14 +357,14 @@ async function buildSalaries(){
       const p = P(pid);
       return { pid: String(pid), name: p?p.n:`id ${pid}`, pos: p?p.pos:"?", espnId: p?p.e:"", team: p?p.t:"", amt: sal(pid) };
     });
-    const total = ps.reduce((s,p) => s + p.amt, 0);
-    return { roster_id: r.roster_id, owner, sn, avatar, players: ps, total, room: CAP - total };
+    const total = ps.reduce((s,p) => s + p.amt, 0);  // picks are $0 -> never in the total
+    return { roster_id: r.roster_id, owner, sn, avatar, players: ps, picks: picksByRoster[r.roster_id] || [], total, room: CAP - total };
   }).sort((a,b) => b.total - a.total);
 
   return teams;
 }
 
-// ---- sorting / filtering a team's players ----
+// ---- Teams tab: sort/filter ----
 function sortedFilteredPlayers(t){
   const mode = SORT[t.roster_id] || "sal";
   const fpos = FILTER[t.roster_id] || "ALL";
@@ -299,7 +373,7 @@ function sortedFilteredPlayers(t){
   ps.sort((a,b) => {
     if(mode === "name") return a.name.localeCompare(b.name);
     if(mode === "pos")  return (POS_ORDER.indexOf(a.pos) - POS_ORDER.indexOf(b.pos)) || (b.amt - a.amt) || a.name.localeCompare(b.name);
-    return (b.amt - a.amt) || a.name.localeCompare(b.name); // salary default
+    return (b.amt - a.amt) || a.name.localeCompare(b.name);
   });
   return ps;
 }
@@ -310,7 +384,11 @@ function teamPositions(t){
   return known.concat(extra);
 }
 
-// ---- render one team card (used by splash view + show-all) ----
+function avatarImg(t, cls){ return t.avatar
+  ? `<img class="${cls}" src="${t.avatar}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">`
+  : `<span class="${cls}"></span>`; }
+
+// ---- Teams tab card ----
 function teamCard(t){
   const overCap = t.total > CAP;
   const pct = Math.min(100, Math.round(t.total / CAP * 100));
@@ -323,11 +401,12 @@ function teamCard(t){
   const sortOpts = [["sal","Salary"],["pos","Position"],["name","Name"]]
     .map(([v,l]) => `<option value="${v}"${sortMode===v?" selected":""}>${l}</option>`).join("");
   const ps = sortedFilteredPlayers(t);
-  const av = t.avatar ? `<img class="oav" src="${t.avatar}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">` : `<span class="oav"></span>`;
+  const picksHtml = t.picks.length ? `<div class="subhd">Future picks · $0 (not in cap)</div>` +
+    t.picks.map(pk => `<div class="prow">${pickIcon()}<span class="pname">${esc(pickLabel(pk, t.roster_id))}</span><span class="pick-sal">$0</span></div>`).join("") : "";
 
   return `<div class="team">
     <div class="team-head">
-      ${av}
+      ${avatarImg(t,"oav")}
       <div class="team-name">${esc(t.owner)}<span class="sn">@${esc(t.sn)}</span></div>
       <div class="team-fin">
         <div class="team-total">$${t.total}<span class="cap"> / ${CAP}</span></div>
@@ -345,6 +424,7 @@ function teamCard(t){
         <span class="pname">${esc(p.name)}<span class="ppos">${esc(p.pos)}</span></span>
         <span class="psal">$${p.amt}</span>
       </div>`).join("") : `<div class="status" style="padding:8px 0">No players at this position.</div>`}
+      ${picksHtml}
     </div>
   </div>`;
 }
@@ -358,20 +438,16 @@ function wireTeamControls(scope){
   }));
 }
 
-// ---- render: Teams tab (splash picker + selected columns, or all-10) ----
+// ---- Teams tab ----
 function paintTable(){
   const el = document.getElementById("pane-table");
   if(!TEAMS.length){ el.innerHTML = `<div class="loading">No teams.</div>`; return; }
-
-  // team picker (always shown at top)
   const picker = `<div class="splash-h">Pick 1–4 teams to view side by side, or show all.</div>
     <div class="picker">` + TEAMS.map(t => {
-      const av = t.avatar ? `<img class="oav" src="${t.avatar}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">` : `<span class="oav"></span>`;
       const sel = SELECTED.has(t.roster_id) ? " sel" : "";
       return `<div class="pcard${sel}" data-pick="${t.roster_id}">
-        ${av}<div class="ometa"><div class="oname">${esc(t.owner)}</div>
-        <div class="osub">$${t.total} / ${CAP}</div></div>
-      </div>`;
+        ${avatarImg(t,"oav")}<div class="ometa"><div class="oname">${esc(t.owner)}</div>
+        <div class="osub">$${t.total} / ${CAP}</div></div></div>`;
     }).join("") + `</div>
     <div class="picker-actions">
       <button class="btn sm" id="showAllBtn">Show all 10</button>
@@ -379,32 +455,23 @@ function paintTable(){
       <span class="sel-count" id="selCount"></span>
     </div>`;
 
-  // which teams to render as columns
   let shown, nCol;
-  if(SELECTED.size === 0){
-    shown = []; // splash only, no columns yet
-  } else {
-    shown = TEAMS.filter(t => SELECTED.has(t.roster_id));
-    nCol = Math.min(4, shown.length);
-  }
   const showAllMode = SELECTED.has("__ALL__");
   if(showAllMode){ shown = TEAMS.slice(); nCol = 4; }
+  else if(SELECTED.size === 0){ shown = []; }
+  else { shown = TEAMS.filter(t => SELECTED.has(t.roster_id)); nCol = Math.min(4, shown.length); }
 
-  let cols;
-  if(!shown.length){
-    cols = `<div class="status" style="padding:20px 0;text-align:center">Select a team above to see its roster and salaries.</div>`;
-  } else {
-    cols = `<div class="cols n${nCol}">` + shown.map(teamCard).join("") + `</div>`;
-  }
+  const cols = !shown.length
+    ? `<div class="status" style="padding:20px 0;text-align:center">Select a team above to see its roster, salaries, and picks.</div>`
+    : `<div class="cols n${nCol}">` + shown.map(teamCard).join("") + `</div>`;
 
   el.innerHTML = picker + cols;
 
-  // wire picker
   el.querySelectorAll("[data-pick]").forEach(c => c.addEventListener("click", () => {
     SELECTED.delete("__ALL__");
     const id = Number(c.dataset.pick);
     if(SELECTED.has(id)) SELECTED.delete(id);
-    else { if(SELECTED.size >= 4){ /* cap at 4: drop the oldest */ const first = SELECTED.values().next().value; SELECTED.delete(first); } SELECTED.add(id); }
+    else { if(SELECTED.size >= 4){ const first = SELECTED.values().next().value; SELECTED.delete(first); } SELECTED.add(id); }
     paintTable();
   }));
   const showAll = el.querySelector("#showAllBtn"); if(showAll) showAll.addEventListener("click", () => { SELECTED.clear(); SELECTED.add("__ALL__"); paintTable(); });
@@ -414,108 +481,205 @@ function paintTable(){
   wireTeamControls(el);
 }
 
-// ---- render: Trade Builder ----
+/* ============================ TRADE BUILDER (multi-team) ============================ */
+
+function capExplainer(){
+  const active515 = CAP >= 515;
+  return `<div class="explain">
+    <b>How the cap works.</b> The cap is currently <b>$${CAP}</b>${active515 ? "" : " (the auction budget)"}.
+    ${active515
+      ? `That's the $365 auction budget plus the $150 FAAB, treated as one combined salary cap.`
+      : `If the league vote passes, the in-season cap becomes <b>$515</b> — the $365 auction budget plus the $150 FAAB, treated as one combined salary cap.`}
+    That extra room is what lets trades actually happen: you can take on a big contract without instantly breaking the cap.
+    FAAB isn't traded on its own, it's just part of your $${active515 ? 515 : 515}. Next year the cap resets to the auction base plus its increase, and FAAB salaries carry over.
+    <br><b>Draft picks trade at $0</b> and never count toward the cap (a pick only gets a salary when a rookie is drafted into it).
+  </div>`;
+}
+
+function tradeTeamObjects(){ return TRADE_TEAMS.map(teamByRid).filter(Boolean); }
+
+// destination options for an asset from team `fromRid` (any OTHER team in the trade)
+function destOptions(fromRid, selectedTo){
+  const opts = tradeTeamObjects().filter(t => t.roster_id !== fromRid)
+    .map(t => `<option value="${t.roster_id}" ${selectedTo===t.roster_id?"selected":""}>→ ${esc(t.owner)}</option>`);
+  return opts.join("");
+}
+
+function assetKindKey(kind, id){ return `${kind}:${id}`; }
+
 function paintTrade(){
   const el = document.getElementById("pane-trade");
   if(!TEAMS.length){ el.innerHTML = `<div class="loading">No teams.</div>`; return; }
 
-  function sidePanel(sideKey, label){
-    const st = TRADE[sideKey];
-    const teamOpts = `<option value="">— pick a team —</option>` + TEAMS.map((t,i) =>
-      `<option value="${i}" ${st.teamIdx===i?"selected":""}>${esc(t.owner)} ($${t.total})</option>`).join("");
-    let body = `<div class="status">Select a team to see its roster.</div>`;
-    if(st.teamIdx != null && TEAMS[st.teamIdx]){
-      const t = TEAMS[st.teamIdx];
-      const posList = teamPositions(t);
-      const fposOpts = [`<option value="ALL"${st.fpos==="ALL"?" selected":""}>All pos</option>`]
-        .concat(posList.map(p => `<option value="${esc(p)}"${st.fpos===p?" selected":""}>${esc(p)}</option>`)).join("");
-      const q = (st.q||"").toLowerCase();
-      let ps = t.players.slice().sort((a,b) => b.amt - a.amt || a.name.localeCompare(b.name));
-      if(st.fpos !== "ALL") ps = ps.filter(p => p.pos === st.fpos);
-      if(q) ps = ps.filter(p => p.name.toLowerCase().includes(q));
-      body = `<input class="psearch" type="search" placeholder="Search players…" data-side="${sideKey}" value="${esc(st.q||"")}">
-        <div class="ctrls"><select data-tfilter="${sideKey}">${fposOpts}</select></div>
-        <div class="picklist">` + (ps.length ? ps.map(p =>
-          `<label class="pick ${st.sel.has(p.pid)?'sel':''}">
-            <input type="checkbox" data-side="${sideKey}" data-pid="${p.pid}" ${st.sel.has(p.pid)?"checked":""}>
-            ${playerImg(p)}
-            <span class="nm">${esc(p.name)}<span class="ppos">${esc(p.pos)}</span></span>
-            <span class="amt">$${p.amt}</span>
-          </label>`).join("") : `<div class="status" style="padding:8px">No matching players.</div>`) + `</div>`;
-    }
-    return `<div class="side"><h3>${label}</h3>
-      <select class="teamsel" data-side="${sideKey}">${teamOpts}</select>${body}</div>`;
+  // team chooser chips (toggle teams into the trade; 2-4)
+  const chips = `<div class="splash-h">Add teams to the trade (2–4).</div>
+    <div class="trade-teams">` + TEAMS.map(t => {
+      const on = TRADE_TEAMS.includes(t.roster_id) ? " on" : "";
+      return `<div class="tt-chip${on}" data-tteam="${t.roster_id}">${avatarImg(t,"oav")}<span>${esc(t.owner)}</span></div>`;
+    }).join("") + `</div>
+    <div class="tt-note">${TRADE_TEAMS.length<2 ? "Pick at least two teams." : `${TRADE_TEAMS.length}-team trade. Check an asset, then choose where it goes.`}</div>`;
+
+  // one panel per team in the trade
+  let panels = "";
+  for(const rid of TRADE_TEAMS){
+    const t = teamByRid(rid); if(!t) continue;
+    const ui = TRADE_UI[rid] || (TRADE_UI[rid] = { q:"", fpos:"ALL" });
+    const posList = teamPositions(t);
+    const fposOpts = [`<option value="ALL"${ui.fpos==="ALL"?" selected":""}>All pos</option>`]
+      .concat(posList.map(p => `<option value="${esc(p)}"${ui.fpos===p?" selected":""}>${esc(p)}</option>`)).join("");
+    const q = (ui.q||"").toLowerCase();
+    let ps = t.players.slice().sort((a,b) => b.amt - a.amt || a.name.localeCompare(b.name));
+    if(ui.fpos !== "ALL") ps = ps.filter(p => p.pos === ui.fpos);
+    if(q) ps = ps.filter(p => p.name.toLowerCase().includes(q));
+
+    const playerRows = ps.map(p => {
+      const key = assetKindKey("p", p.pid);
+      const a = TRADE_ASSETS.get(key);
+      const on = a && a.fromRid===rid;
+      const dest = on ? `<select class="dest" data-destfor="${key}">${destOptions(rid, a.toRid)}</select>` : "";
+      return `<div class="pick ${on?'sel':''}">
+        <input type="checkbox" data-asset="player" data-rid="${rid}" data-pid="${p.pid}" ${on?"checked":""}>
+        ${playerImg(p)}
+        <span class="nm">${esc(p.name)}<span class="ppos">${esc(p.pos)}</span></span>
+        ${dest || `<span class="amt">$${p.amt}</span>`}
+      </div>`;
+    }).join("");
+
+    const pickRows = t.picks.map(pk => {
+      const key = pk.key; // "k:holderRid:year-round-origRid"
+      const a = TRADE_ASSETS.get(key);
+      const on = a && a.fromRid===rid;
+      const dest = on ? `<select class="dest" data-destfor="${esc(key)}">${destOptions(rid, a.toRid)}</select>` : "";
+      return `<div class="pick ${on?'sel':''}">
+        <input type="checkbox" data-asset="pick" data-rid="${rid}" data-pickkey="${esc(pk.ykey)}" ${on?"checked":""}>
+        ${pickIcon()}
+        <span class="nm">${esc(pickLabel(pk, rid))} <span class="ppos">$0</span></span>
+        ${dest || `<span class="amt">pick</span>`}
+      </div>`;
+    }).join("");
+
+    panels += `<div class="side">
+      <h3>${avatarImg(t,"oav")} ${esc(t.owner)} <span class="status" style="font-weight:600">($${t.total} / ${CAP})</span></h3>
+      <input class="psearch" type="search" placeholder="Search ${esc(t.owner)}'s players…" data-searchrid="${rid}" value="${esc(ui.q||"")}">
+      <div class="ctrls"><select data-filterrid="${rid}">${fposOpts}</select></div>
+      <div class="picklist">
+        ${playerRows || `<div class="status" style="padding:8px">No matching players.</div>`}
+        ${t.picks.length ? `<div class="subhd">Future picks · $0</div>${pickRows}` : ""}
+      </div>
+    </div>`;
   }
 
-  el.innerHTML = `<div class="trade-grid">
-      ${sidePanel("A","Team A gives")}
-      ${sidePanel("B","Team B gives")}
-    </div>
-    <div id="tradeResult"></div>`;
-
-  el.querySelectorAll("select.teamsel").forEach(sel => sel.addEventListener("change", e => {
-    const side = e.target.dataset.side;
-    TRADE[side].teamIdx = e.target.value === "" ? null : Number(e.target.value);
-    TRADE[side].sel = new Set(); TRADE[side].q = ""; TRADE[side].fpos = "ALL";
-    paintTrade();
-  }));
-  el.querySelectorAll("input.psearch").forEach(inp => inp.addEventListener("input", e => {
-    const side = e.target.dataset.side; TRADE[side].q = e.target.value;
-    // re-render just this side's list without losing focus: full repaint is fine here (small lists)
-    const pos = e.target.selectionStart; paintTrade();
-    const again = document.querySelector(`input.psearch[data-side="${side}"]`);
-    if(again){ again.focus(); try{ again.setSelectionRange(pos,pos); }catch(_){} }
-  }));
-  el.querySelectorAll("select[data-tfilter]").forEach(sel => sel.addEventListener("change", e => {
-    TRADE[e.target.dataset.tfilter].fpos = e.target.value; paintTrade();
-  }));
-  el.querySelectorAll(".pick input[type=checkbox]").forEach(cb => cb.addEventListener("change", e => {
-    const side = e.target.dataset.side, pid = e.target.dataset.pid;
-    if(e.target.checked) TRADE[side].sel.add(pid); else TRADE[side].sel.delete(pid);
-    renderTradeResult();
-  }));
+  el.innerHTML = capExplainer() + chips + (TRADE_TEAMS.length>=2 ? panels : "") + `<div id="tradeResult"></div>`;
+  wireTrade(el);
   renderTradeResult();
 }
 
-function sumSelected(sideKey){
-  const st = TRADE[sideKey]; if(st.teamIdx == null) return 0;
-  return TEAMS[st.teamIdx].players.filter(p => st.sel.has(p.pid)).reduce((s,p) => s + p.amt, 0);
+function wireTrade(el){
+  // toggle teams in/out of the trade
+  el.querySelectorAll("[data-tteam]").forEach(chip => chip.addEventListener("click", () => {
+    const rid = Number(chip.dataset.tteam);
+    if(TRADE_TEAMS.includes(rid)){
+      TRADE_TEAMS = TRADE_TEAMS.filter(x => x !== rid);
+      // drop any assets from/to this team
+      for(const [k,a] of [...TRADE_ASSETS]) if(a.fromRid===rid || a.toRid===rid) TRADE_ASSETS.delete(k);
+    } else {
+      if(TRADE_TEAMS.length >= 4) return; // cap at 4 teams
+      TRADE_TEAMS.push(rid);
+    }
+    // any asset whose destination is no longer a valid team gets its dest reset
+    reconcileDestinations();
+    paintTrade();
+  }));
+  // search / filter within a team
+  el.querySelectorAll("input[data-searchrid]").forEach(inp => inp.addEventListener("input", e => {
+    const rid = Number(e.target.dataset.searchrid); TRADE_UI[rid].q = e.target.value;
+    const caret = e.target.selectionStart; paintTrade();
+    const again = document.querySelector(`input[data-searchrid="${rid}"]`);
+    if(again){ again.focus(); try{ again.setSelectionRange(caret,caret); }catch(_){} }
+  }));
+  el.querySelectorAll("select[data-filterrid]").forEach(sel => sel.addEventListener("change", e => {
+    TRADE_UI[Number(e.target.dataset.filterrid)].fpos = e.target.value; paintTrade();
+  }));
+  // check/uncheck an asset
+  el.querySelectorAll("input[data-asset]").forEach(cb => cb.addEventListener("change", e => {
+    const rid = Number(e.target.dataset.rid);
+    const others = TRADE_TEAMS.filter(x => x !== rid);
+    const defaultTo = others.length ? others[0] : null;
+    if(e.target.dataset.asset === "player"){
+      const pid = e.target.dataset.pid, key = assetKindKey("p", pid);
+      const t = teamByRid(rid); const p = t.players.find(x => x.pid===pid);
+      if(e.target.checked) TRADE_ASSETS.set(key, { fromRid:rid, toRid:defaultTo, kind:"player", amt:p?p.amt:0, label:p?p.name:pid });
+      else TRADE_ASSETS.delete(key);
+    } else {
+      const ykey = e.target.dataset.pickkey, key = `k:${rid}:${ykey}`;
+      const t = teamByRid(rid); const pk = t.picks.find(x => x.ykey===ykey);
+      if(e.target.checked) TRADE_ASSETS.set(key, { fromRid:rid, toRid:defaultTo, kind:"pick", amt:0, label:pk?pk.label:ykey });
+      else TRADE_ASSETS.delete(key);
+    }
+    paintTrade();
+  }));
+  // change an asset's destination
+  el.querySelectorAll("select.dest").forEach(sel => sel.addEventListener("change", e => {
+    const key = e.target.dataset.destfor; const a = TRADE_ASSETS.get(key);
+    if(a){ a.toRid = Number(e.target.value); renderTradeResult(); }
+  }));
+}
+
+// if a destination team left the trade, point the asset at the first available other team
+function reconcileDestinations(){
+  for(const [k,a] of TRADE_ASSETS){
+    const others = TRADE_TEAMS.filter(x => x !== a.fromRid);
+    if(!TRADE_TEAMS.includes(a.fromRid)){ TRADE_ASSETS.delete(k); continue; }
+    if(a.toRid==null || !others.includes(a.toRid)) a.toRid = others.length ? others[0] : null;
+  }
 }
 
 function renderTradeResult(){
   const box = document.getElementById("tradeResult"); if(!box) return;
-  const a = TRADE.A, b = TRADE.B;
-  if(a.teamIdx == null || b.teamIdx == null){
-    box.innerHTML = `<div class="result"><div class="status">Pick a team on each side to build a trade.</div></div>`; return;
-  }
-  if(a.teamIdx === b.teamIdx){
-    box.innerHTML = `<div class="result"><div class="verdict bad">Pick two different teams.</div></div>`; return;
-  }
-  const tA = TEAMS[a.teamIdx], tB = TEAMS[b.teamIdx];
-  const outA = sumSelected("A"), outB = sumSelected("B");
-  const projA = tA.total - outA + outB, projB = tB.total - outB + outA;
-  const roomA = CAP - projA, roomB = CAP - projB;
-  const overA = projA > CAP, overB = projB > CAP;
+  const teams = tradeTeamObjects();
+  if(teams.length < 2){ box.innerHTML = `<div class="result"><div class="status">Add at least two teams to build a trade.</div></div>`; return; }
 
-  const teamLine = (t, out, inc, proj, room, over) => `
-    <div class="rline"><span class="lab">${esc(t.owner)} now</span><span class="val">$${t.total}</span></div>
-    <div class="rline"><span class="lab">gives / receives</span><span class="val">-$${out} / +$${inc}</span></div>
-    <div class="rline"><span class="lab rbig">${esc(t.owner)} after</span><span class="val rbig ${over?'room-over':''}">$${proj} / ${CAP}</span></div>
-    <div class="rline"><span class="lab">room after</span><span class="val ${room<0?'room-over':'room-ok'}">${room<0?`$${Math.abs(room)} over`:`$${room} room`}</span></div>`;
+  // per-team salary in/out (picks are $0 so they don't move the total)
+  const out = {}, inc = {}, movingPicks = {};
+  teams.forEach(t => { out[t.roster_id]=0; inc[t.roster_id]=0; movingPicks[t.roster_id]={in:0,out:0}; });
+  let anyAsset = false;
+  for(const a of TRADE_ASSETS.values()){
+    if(a.toRid==null) continue;
+    anyAsset = true;
+    if(a.kind === "player"){ out[a.fromRid]+=a.amt; inc[a.toRid]+=a.amt; }
+    else { movingPicks[a.fromRid].out++; movingPicks[a.toRid].in++; }
+  }
 
-  const anyOver = overA || overB;
-  const verdict = anyOver
-    ? `<div class="verdict bad">Over cap: ${[overA?tA.owner:null, overB?tB.owner:null].filter(Boolean).join(" and ")} would exceed $${CAP}.</div>`
-    : `<div class="verdict ok">Both teams fit under $${CAP}.</div>`;
+  const n = Math.min(4, teams.length);
+  const cards = teams.map(t => {
+    const o = out[t.roster_id]||0, i = inc[t.roster_id]||0;
+    const proj = t.total - o + i;
+    const room = CAP - proj, over = proj > CAP;
+    const mp = movingPicks[t.roster_id];
+    const pickLine = (mp.in||mp.out) ? `<div class="rline"><span class="lab">picks</span><span class="val">${mp.out?`-${mp.out}`:""}${mp.out&&mp.in?" / ":""}${mp.in?`+${mp.in}`:""} ($0)</span></div>` : "";
+    return `<div class="rteam ${over?'over':''}">
+      <div class="rt-name">${esc(t.owner)}</div>
+      <div class="rline"><span class="lab">now</span><span class="val">$${t.total}</span></div>
+      <div class="rline"><span class="lab">salary out / in</span><span class="val">-$${o} / +$${i}</span></div>
+      ${pickLine}
+      <div class="rt-after ${over?'room-over':''}">after: $${proj} / ${CAP}</div>
+      <div class="rline"><span class="lab">room</span><span class="val ${room<0?'room-over':'room-ok'}">${room<0?`$${Math.abs(room)} over`:`$${room} room`}</span></div>
+    </div>`;
+  }).join("");
+
+  const overTeams = teams.filter(t => (t.total - (out[t.roster_id]||0) + (inc[t.roster_id]||0)) > CAP);
+  let verdict = "";
+  if(anyAsset){
+    verdict = overTeams.length
+      ? `<div class="verdict bad">Over cap: ${overTeams.map(t=>esc(t.owner)).join(", ")} would exceed $${CAP}.</div>`
+      : `<div class="verdict ok">All teams fit under $${CAP}.</div>`;
+  }
 
   box.innerHTML = `<div class="result">
-      <div class="rcols">
-        <div>${teamLine(tA, outA, outB, projA, roomA, overA)}</div>
-        <div>${teamLine(tB, outB, outA, projB, roomB, overB)}</div>
-      </div>
-      ${verdict}
-      <div class="swap-note">Salary travels with the player. Cap = $${CAP} (config).</div>
-    </div>`;
+    <div class="rcols n${n}">${cards}</div>
+    ${verdict}
+    <div class="swap-note">Salary travels with the player. Draft picks move at $0 and never count toward the cap. Cap = $${CAP} (config).</div>
+  </div>`;
 }
 
 // ---- load + paint ----
@@ -525,13 +689,16 @@ async function load(){
   errbox.innerHTML = ""; status.textContent = "Pulling live data…";
   try{
     TEAMS = await buildSalaries();
-    for(const k of ["A","B"]){ const st = TRADE[k]; if(st.teamIdx != null && !TEAMS[st.teamIdx]){ st.teamIdx = null; st.sel = new Set(); } }
+    // reconcile trade against fresh data
+    TRADE_TEAMS = TRADE_TEAMS.filter(rid => teamByRid(rid));
+    for(const [k,a] of [...TRADE_ASSETS]) if(!teamByRid(a.fromRid)) TRADE_ASSETS.delete(k);
+    reconcileDestinations();
     document.getElementById("sub").textContent = `${TEAMS.length} teams · season ${SEASON}`;
     document.getElementById("capLabel").textContent = `$${CAP}`;
     paintTable(); paintTrade();
     status.textContent = `Updated ${new Date().toLocaleTimeString()}`;
     document.getElementById("foot").innerHTML =
-      `Live from the public Sleeper API on each load. Cap is a config value (currently $${CAP}). No fair/unfair judgment — just the numbers.`;
+      `Live from the public Sleeper API on each load. Cap is a config value (currently $${CAP}). Picks are $0 and never count toward the cap. No fair/unfair judgment — just the numbers.`;
   }catch(e){
     errbox.innerHTML = `<div class="err">Couldn't load: ${esc(e.message)}. Try Refresh.</div>`;
     status.textContent = "";
