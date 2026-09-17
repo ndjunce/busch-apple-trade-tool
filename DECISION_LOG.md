@@ -38,3 +38,20 @@ Nick regenerated the GitHub PAT, so the stale-token block is cleared. Created pr
 ## 2026-09-16 — v1 LIVE on Vercel + v2 QoL spec written — vote 8/10 yes
 v1 deployed: preview URL https://busch-apple-trade-tool-dokpbm9sb-fun-fun-fun1.vercel.app/ (Nick to switch to the clean PRODUCTION domain — Settings→Domains, likely busch-apple-trade-tool.vercel.app, or rename project shorter). League vote on the $515 cap = 8 yes, awaiting 2.
 Nick requested QoL v2 (spec: `V2_QOL_SPEC.md`): (1) REMOVE the source badge (auction/rookie/FAAB/FA$1) — label is cosmetically wrong for some; $ amounts are audited-correct, so just hide the tag, don't touch dollar logic; (2) player images/team logos per row (espn_id→team logo→initial fallback); (3) per-team sort + filter (salary/pos/name; filter by pos); (4) SPLASH landing + multi-team select (view 1–4 teams side by side, plus show-all); (5) same select/logos/filter niceties on the trade-tool tab; (6) shorter URL (Nick action, Vercel domain — no code). Guardrails: standalone only, live Sleeper, CAP config stays 365 until vote passes, mobile-first no-overflow, re-verify totals after refactor. NEXT: EDIT chat builds v2 from V2_QOL_SPEC.md.
+
+## 2026-09-16 — v2 QoL round — WORKS (deploy = Vercel auto on push)
+Built all v2 spec items in the standalone `index.html`. Salary $ resolver dollar-logic UNCHANGED from v1.
+
+**Shipped:**
+1. **Source badge REMOVED** everywhere (salary table + trade rows). Kept the salary $. Resolver dollar logic untouched (badge was cosmetically mislabeling some players; $ amounts are audited-correct).
+2. **Player images** — headshot (ESPN CDN by Sleeper `espn_id`) → team logo (white chip) → position-colored initial. Extended the slim players cache to keep `espn_id` (`e`) + `team` (`t`); bumped cache key v1→v2 so stale caches refresh. Owner **avatars** shown on team headers + picker cards (Sleeper `avatar` thumbs).
+3. **Per-team sort + filter** — sort by Salary (default), Position, Name; filter by position. Client-side on loaded rosters, per-team state.
+4. **Splash / landing + multi-team select** — the Teams tab opens as a picker (all 10, owner + avatar + $total). Select 1–4 teams → rendered side by side in responsive columns (n1–n4; collapses on mobile). "Show all 10" + "Clear" buttons. 4-team cap (adding a 5th drops the oldest).
+5. **Trade tab niceties** — reused player images + a per-side **search box** + position filter within each team's pick list; two-team builder core unchanged. Search preserves focus/caret across re-render.
+6. Shorter URL = Nick action (Vercel domain), no code.
+
+**Verified after build:** (a) resolver re-run vs live Sleeper — **all 10 team totals still match the audit exactly** (Ajay $426 … Seth $331); (b) `<script>` parses clean via node `new Function()`; (c) ESPN headshot + team-logo CDNs return 200 image/png, and Sleeper dict confirmed carrying espn_id+team (Saquon 3929630/PHI); (d) source badge render confirmed gone; CAP still 365.
+
+**Mobile-first:** picker + columns collapse to 1-col under 620px; player rows are a 30px-image/name/salary grid with ellipsis, no horizontal overflow intended at ~390px (league is mostly phones).
+
+**CAP still 365** (config constant). Flip to 515 when the vote passes (8/10 yes as of spec). **Freeze before v2:** tag `good-busch-v1` → 4259a1c. Blast radius: this repo's index.html only; did not touch fantasy-dashboard or CAN AM tools.
