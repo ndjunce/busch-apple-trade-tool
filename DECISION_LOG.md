@@ -76,3 +76,8 @@ Built all three v3 spec items in standalone `index.html`. Salary $ resolver doll
 **Verified:** (a) salary totals re-run vs live — 9/10 match the audit exactly; **Zach $353 vs $354 = a $1 live-data drift** (a $1 FA add/drop since the audit), NOT a logic change (resolver code untouched, other 9 exact). (b) pick model correct (above). (c) `<script>` parses clean via node.
 **Mobile-first:** trade team chips + panels stack; result cards use n2/n3/n4 grids collapsing to 1-col under 560px.
 **CAP still 365** (config). **Freeze before v3:** tag `good-busch-v2` → 9cd4c56. Blast radius: this repo's index.html only.
+
+
+## 2026-09-16 — v3 shipped + v4 spec (neutral display while vote open) written
+v3 LIVE + verified: multi-team trades (2-4 teams, per-asset destination selector), future draft capital from Sleeper traded_picks ($0 assets; 9-pick baseline − traded + acquired; edit chat caught+fixed a Set-collapse bug where an acquired duplicate-round pick vanished, now keyed by year-round-origin w/ "via [owner]" label), $515 explainer note. Picks confirmed pulling live from Sleeper API. Salary 9/10 exact vs audit; Zach $353 vs $354 = live $1 drift, not logic.
+v4 spec (`V4_SPEC.md`): (1) NEUTRAL cap display while vote is still open — remove all over-cap flags / red / "/365" / room; show each team's TOTAL VALUE only (team cards + multi-team view + trade projected totals). Keep CAP const + $515 note, but gate the cap-limit UI behind `SHOW_CAP=false` so it's a one-line re-enable at $515 when the vote passes. (2) Responsive: side-by-side columns on desktop, stacked single-column on mobile (<=620px), no overflow at 390px. Guardrails: resolver dollars unchanged, picks $0, commit author = ndjunce noreply (so Vercel deploys). NEXT: EDIT chat builds v4 from V4_SPEC.md.
