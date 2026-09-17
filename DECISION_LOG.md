@@ -81,3 +81,20 @@ Built all three v3 spec items in standalone `index.html`. Salary $ resolver doll
 ## 2026-09-16 — v3 shipped + v4 spec (neutral display while vote open) written
 v3 LIVE + verified: multi-team trades (2-4 teams, per-asset destination selector), future draft capital from Sleeper traded_picks ($0 assets; 9-pick baseline − traded + acquired; edit chat caught+fixed a Set-collapse bug where an acquired duplicate-round pick vanished, now keyed by year-round-origin w/ "via [owner]" label), $515 explainer note. Picks confirmed pulling live from Sleeper API. Salary 9/10 exact vs audit; Zach $353 vs $354 = live $1 drift, not logic.
 v4 spec (`V4_SPEC.md`): (1) NEUTRAL cap display while vote is still open — remove all over-cap flags / red / "/365" / room; show each team's TOTAL VALUE only (team cards + multi-team view + trade projected totals). Keep CAP const + $515 note, but gate the cap-limit UI behind `SHOW_CAP=false` so it's a one-line re-enable at $515 when the vote passes. (2) Responsive: side-by-side columns on desktop, stacked single-column on mobile (<=620px), no overflow at 390px. Guardrails: resolver dollars unchanged, picks $0, commit author = ndjunce noreply (so Vercel deploys). NEXT: EDIT chat builds v4 from V4_SPEC.md.
+
+## 2026-09-16 — v4: NEUTRAL cap display (SHOW_CAP flag) + responsive panels — WORKS
+Small polish round to keep the site non-inflammatory while the $515 vote is still open. Salary resolver dollar logic UNCHANGED.
+
+**1. Neutral cap display, gated behind `SHOW_CAP` (default false).** Added `const SHOW_CAP = false;` next to `CAP`. When false, the UI shows each team's **total value only** — no "/365", no room-remaining, no "over cap"/red anywhere. Gated (logic kept, not deleted, so it's a one-line re-enable):
+  - Header capnote: dropped the "Cap per team: $365" line → neutral "salaries pulled live…".
+  - Team cards: total shows "$X" + label "total value" (no "/CAP", no room line, no capbar) when neutral; `overCap` forced false.
+  - Picker subline + trade-panel headers: "$X" only (no "/CAP").
+  - Trade result cards: "total value after: $X" (no "/CAP", no room line, no red border/`over`); the over/under **verdict is suppressed** (only renders under `if(SHOW_CAP && anyAsset)`).
+  - Foot + swap-note reworded to "showing total value only while the league cap vote is open."
+  - **Kept the $515 explainer note** (informational about the pending vote) per spec.
+  - **Re-enable path when vote passes:** set `CAP=515` AND `SHOW_CAP=true` → all cap flags/room/red come back at $515. Verified all over-flags (`overCap`, `over`) and the verdict are `SHOW_CAP`-gated so nothing leaks while false.
+
+**2. Responsive: side-by-side desktop, stacked mobile.** Wrapped the trade-tab team panels in a `.trade-panels` grid (n1–n4), matching the existing `.cols`/`.rcols` pattern: full columns on desktop, collapse to 2-up ≤900px, single column ≤620px. Teams multi-team view + trade result cards already had these breakpoints. Mobile-first, no horizontal overflow intended at ~390px.
+
+**Verified:** (a) `<script>` parses clean (node `new Function()`); (b) confirmed every cap/over/room/red output is behind `SHOW_CAP` (grep + read of teamCard `overCap`, renderTradeResult `over`/`afterLine`/verdict); (c) salary totals re-run vs live — **9/10 exact**, Zach $353 vs $354 = the SAME $1 live-data drift as v3 (resolver untouched, not a v4 regression). Picks still $0, never counted.
+**CAP=365 / SHOW_CAP=false.** **Freeze before v4:** tag `good-busch-v3` → 6868e94. Commit author = ndjunce/noreply (Vercel-linked) per repo git config. Blast radius: this repo's index.html only.

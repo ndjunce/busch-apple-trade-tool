@@ -113,7 +113,15 @@
   .tt-chip .oav{width:26px;height:26px;flex:0 0 26px;border-radius:50%;object-fit:cover;background:var(--panel2)}
   .tt-note{color:var(--mut);font-size:12px;margin:2px 0 14px}
 
-  .side{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:14px;margin-bottom:12px}
+  /* trade panels: side-by-side on desktop, stacked single-column on mobile */
+  .trade-panels{display:grid;gap:12px;margin-bottom:6px}
+  .trade-panels.n1{grid-template-columns:1fr}
+  .trade-panels.n2{grid-template-columns:repeat(2,1fr)}
+  .trade-panels.n3{grid-template-columns:repeat(3,1fr)}
+  .trade-panels.n4{grid-template-columns:repeat(4,1fr)}
+  @media(max-width:900px){.trade-panels.n3,.trade-panels.n4{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:620px){.trade-panels.n2,.trade-panels.n3,.trade-panels.n4{grid-template-columns:1fr}}
+  .side{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:14px}
   .side h3{margin:0 0 8px;font-size:14px;font-weight:800;display:flex;align-items:center;gap:8px}
   .side h3 .oav{width:26px;height:26px;border-radius:50%;object-fit:cover;background:var(--panel2)}
   input.psearch{width:100%;background:var(--panel2);color:var(--txt);border:1px solid var(--line);
@@ -159,7 +167,7 @@
   <header>
     <h1>Busch Apple — Salary & Trade Tool</h1>
     <div class="sub" id="sub">Loading live salaries from Sleeper…</div>
-    <div class="capnote">Cap per team: <b id="capLabel">$365</b> · salaries pulled live from Sleeper on each load. Honest calculator, no fair/unfair verdict.</div>
+    <div class="capnote" id="capNote">Salaries pulled live from Sleeper on each load. Honest calculator, no fair/unfair verdict.</div>
   </header>
 
   <div class="tabs">
@@ -192,7 +200,9 @@
    ============================================================================= */
 
 // ---- CONFIG ----
-const CAP = 365;                    // <-- one-line flip to 515 when the $515 vote passes
+const CAP = 365;                    // <-- flip to 515 when the $515 vote passes
+const SHOW_CAP = false;             // <-- NEUTRAL while the vote is open: hide cap limit / over-flags / room / red.
+                                    //     When the vote passes: set CAP=515 AND SHOW_CAP=true to re-enable cap display.
 const LEAGUE_ID = "1372256037666574336";
 const SEASON = "2026";
 const API = "https://api.sleeper.app/v1";
@@ -390,7 +400,7 @@ function avatarImg(t, cls){ return t.avatar
 
 // ---- Teams tab card ----
 function teamCard(t){
-  const overCap = t.total > CAP;
+  const overCap = SHOW_CAP && t.total > CAP;
   const pct = Math.min(100, Math.round(t.total / CAP * 100));
   const roomCls = t.room < 0 ? "room-over" : "room-ok";
   const roomTxt = t.room < 0 ? `$${Math.abs(t.room)} over` : `$${t.room} room`;
@@ -401,7 +411,7 @@ function teamCard(t){
   const sortOpts = [["sal","Salary"],["pos","Position"],["name","Name"]]
     .map(([v,l]) => `<option value="${v}"${sortMode===v?" selected":""}>${l}</option>`).join("");
   const ps = sortedFilteredPlayers(t);
-  const picksHtml = t.picks.length ? `<div class="subhd">Future picks · $0 (not in cap)</div>` +
+  const picksHtml = t.picks.length ? `<div class="subhd">Future picks · $0</div>` +
     t.picks.map(pk => `<div class="prow">${pickIcon()}<span class="pname">${esc(pickLabel(pk, t.roster_id))}</span><span class="pick-sal">$0</span></div>`).join("") : "";
 
   return `<div class="team">
@@ -409,11 +419,11 @@ function teamCard(t){
       ${avatarImg(t,"oav")}
       <div class="team-name">${esc(t.owner)}<span class="sn">@${esc(t.sn)}</span></div>
       <div class="team-fin">
-        <div class="team-total">$${t.total}<span class="cap"> / ${CAP}</span></div>
-        <div class="team-room ${roomCls}">${roomTxt}</div>
+        <div class="team-total">$${t.total}${SHOW_CAP?`<span class="cap"> / ${CAP}</span>`:``}</div>
+        ${SHOW_CAP?`<div class="team-room ${roomCls}">${roomTxt}</div>`:`<div class="team-room" style="color:var(--mut)">total value</div>`}
       </div>
     </div>
-    <div class="capbar"><div class="fill ${overCap?'over':''}" style="width:${pct}%"></div></div>
+    ${SHOW_CAP?`<div class="capbar"><div class="fill ${overCap?'over':''}" style="width:${pct}%"></div></div>`:``}
     <div class="ctrls">
       <select data-sort="${t.roster_id}">${sortOpts}</select>
       <select data-filter="${t.roster_id}">${posOpts}</select>
@@ -447,7 +457,7 @@ function paintTable(){
       const sel = SELECTED.has(t.roster_id) ? " sel" : "";
       return `<div class="pcard${sel}" data-pick="${t.roster_id}">
         ${avatarImg(t,"oav")}<div class="ometa"><div class="oname">${esc(t.owner)}</div>
-        <div class="osub">$${t.total} / ${CAP}</div></div></div>`;
+        <div class="osub">$${t.total}${SHOW_CAP?` / ${CAP}`:``}</div></div></div>`;
     }).join("") + `</div>
     <div class="picker-actions">
       <button class="btn sm" id="showAllBtn">Show all 10</button>
@@ -559,7 +569,7 @@ function paintTrade(){
     }).join("");
 
     panels += `<div class="side">
-      <h3>${avatarImg(t,"oav")} ${esc(t.owner)} <span class="status" style="font-weight:600">($${t.total} / ${CAP})</span></h3>
+      <h3>${avatarImg(t,"oav")} ${esc(t.owner)} <span class="status" style="font-weight:600">($${t.total}${SHOW_CAP?` / ${CAP}`:``})</span></h3>
       <input class="psearch" type="search" placeholder="Search ${esc(t.owner)}'s players…" data-searchrid="${rid}" value="${esc(ui.q||"")}">
       <div class="ctrls"><select data-filterrid="${rid}">${fposOpts}</select></div>
       <div class="picklist">
@@ -569,7 +579,9 @@ function paintTrade(){
     </div>`;
   }
 
-  el.innerHTML = capExplainer() + chips + (TRADE_TEAMS.length>=2 ? panels : "") + `<div id="tradeResult"></div>`;
+  const nPanels = Math.min(4, TRADE_TEAMS.length);
+  const panelsWrap = TRADE_TEAMS.length>=2 ? `<div class="trade-panels n${nPanels}">${panels}</div>` : "";
+  el.innerHTML = capExplainer() + chips + panelsWrap + `<div id="tradeResult"></div>`;
   wireTrade(el);
   renderTradeResult();
 }
@@ -654,31 +666,39 @@ function renderTradeResult(){
   const cards = teams.map(t => {
     const o = out[t.roster_id]||0, i = inc[t.roster_id]||0;
     const proj = t.total - o + i;
-    const room = CAP - proj, over = proj > CAP;
+    const room = CAP - proj, over = SHOW_CAP && proj > CAP;
     const mp = movingPicks[t.roster_id];
     const pickLine = (mp.in||mp.out) ? `<div class="rline"><span class="lab">picks</span><span class="val">${mp.out?`-${mp.out}`:""}${mp.out&&mp.in?" / ":""}${mp.in?`+${mp.in}`:""} ($0)</span></div>` : "";
+    const afterLine = SHOW_CAP
+      ? `<div class="rt-after ${over?'room-over':''}">after: $${proj} / ${CAP}</div>
+         <div class="rline"><span class="lab">room</span><span class="val ${room<0?'room-over':'room-ok'}">${room<0?`$${Math.abs(room)} over`:`$${room} room`}</span></div>`
+      : `<div class="rt-after">total value after: $${proj}</div>`;
     return `<div class="rteam ${over?'over':''}">
       <div class="rt-name">${esc(t.owner)}</div>
       <div class="rline"><span class="lab">now</span><span class="val">$${t.total}</span></div>
       <div class="rline"><span class="lab">salary out / in</span><span class="val">-$${o} / +$${i}</span></div>
       ${pickLine}
-      <div class="rt-after ${over?'room-over':''}">after: $${proj} / ${CAP}</div>
-      <div class="rline"><span class="lab">room</span><span class="val ${room<0?'room-over':'room-ok'}">${room<0?`$${Math.abs(room)} over`:`$${room} room`}</span></div>
+      ${afterLine}
     </div>`;
   }).join("");
 
-  const overTeams = teams.filter(t => (t.total - (out[t.roster_id]||0) + (inc[t.roster_id]||0)) > CAP);
+  // verdict only when cap display is ON; neutral while the vote is open
   let verdict = "";
-  if(anyAsset){
+  if(SHOW_CAP && anyAsset){
+    const overTeams = teams.filter(t => (t.total - (out[t.roster_id]||0) + (inc[t.roster_id]||0)) > CAP);
     verdict = overTeams.length
       ? `<div class="verdict bad">Over cap: ${overTeams.map(t=>esc(t.owner)).join(", ")} would exceed $${CAP}.</div>`
       : `<div class="verdict ok">All teams fit under $${CAP}.</div>`;
   }
 
+  const swapNote = SHOW_CAP
+    ? `Salary travels with the player. Draft picks move at $0 and never count toward the cap. Cap = $${CAP}.`
+    : `Salary travels with the player. Draft picks move at $0. Showing total value only while the league cap vote is open.`;
+
   box.innerHTML = `<div class="result">
     <div class="rcols n${n}">${cards}</div>
     ${verdict}
-    <div class="swap-note">Salary travels with the player. Draft picks move at $0 and never count toward the cap. Cap = $${CAP} (config).</div>
+    <div class="swap-note">${swapNote}</div>
   </div>`;
 }
 
@@ -694,11 +714,11 @@ async function load(){
     for(const [k,a] of [...TRADE_ASSETS]) if(!teamByRid(a.fromRid)) TRADE_ASSETS.delete(k);
     reconcileDestinations();
     document.getElementById("sub").textContent = `${TEAMS.length} teams · season ${SEASON}`;
-    document.getElementById("capLabel").textContent = `$${CAP}`;
     paintTable(); paintTrade();
     status.textContent = `Updated ${new Date().toLocaleTimeString()}`;
-    document.getElementById("foot").innerHTML =
-      `Live from the public Sleeper API on each load. Cap is a config value (currently $${CAP}). Picks are $0 and never count toward the cap. No fair/unfair judgment — just the numbers.`;
+    document.getElementById("foot").innerHTML = SHOW_CAP
+      ? `Live from the public Sleeper API on each load. Cap $${CAP}. Picks are $0 and never count toward the cap. No fair/unfair judgment — just the numbers.`
+      : `Live from the public Sleeper API on each load. Showing total value only while the league cap vote is open. Picks are $0. No fair/unfair judgment — just the numbers.`;
   }catch(e){
     errbox.innerHTML = `<div class="err">Couldn't load: ${esc(e.message)}. Try Refresh.</div>`;
     status.textContent = "";
