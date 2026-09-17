@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Busch Apple — Salary & Trade Tool</title>
+<style>
+  :root{
+    --ink:#0a0e14; --panel:#111823; --panel2:#0d131c; --line:#1e2836;
+    --txt:#e6ebf2; --mut:#8b97a7; --accent:#4aa8ff; --grn:#33e08a; --red:#ff6060; --gold:#ffcf3f;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ink);color:var(--txt);
+       font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       -webkit-font-smoothing:antialiased;line-height:1.4}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 16px 60px}
+  header{padding:22px 0 10px}
+  h1{font-size:22px;font-weight:800;margin:0}
+  .sub{color:var(--mut);font-size:13px;margin-top:4px}
+  .capnote{color:var(--mut);font-size:12px;margin-top:6px}
+  .capnote b{color:var(--txt)}
+
+  .tabs{display:flex;gap:8px;margin:16px 0 18px}
+  .tab{padding:8px 14px;border:1px solid var(--line);border-radius:9px;background:var(--panel);
+       color:var(--mut);font-weight:700;font-size:13px;cursor:pointer;user-select:none}
+  .tab.active{color:var(--txt);border-color:var(--accent);background:rgba(74,168,255,.08)}
+
+  .bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+  .btn{padding:7px 13px;border:1px solid var(--line);border-radius:8px;background:var(--panel);
+       color:var(--txt);font-weight:700;font-size:12.5px;cursor:pointer}
+  .btn:hover{border-color:var(--mut)}
+  .btn.primary{background:var(--accent);color:var(--ink);border-color:var(--accent)}
+  .status{color:var(--mut);font-size:12px}
+
+  .loading{color:var(--mut);padding:40px 0;text-align:center}
+  .err{color:var(--red);border:1px solid var(--red);border-radius:9px;padding:12px;margin:10px 0;font-size:13px}
+
+  /* salary table */
+  .team{border:1px solid var(--line);border-radius:12px;background:var(--panel);margin-bottom:12px;overflow:hidden}
+  .team-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;cursor:pointer}
+  .team-name{font-weight:800;font-size:15px}
+  .team-name .sn{color:var(--mut);font-weight:600;font-size:12px}
+  .team-fin{display:flex;align-items:center;gap:14px;font-variant-numeric:tabular-nums}
+  .team-total{font-weight:800;font-size:15px}
+  .team-room{font-size:12px;font-weight:700}
+  .room-ok{color:var(--grn)} .room-over{color:var(--red)}
+  .capbar{height:6px;background:var(--panel2);border-radius:4px;overflow:hidden;margin-top:8px}
+  .capbar .fill{height:100%;background:var(--accent)}
+  .capbar .fill.over{background:var(--red)}
+  .roster{padding:0 14px 12px}
+  .prow{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;
+        padding:5px 0;border-top:1px solid var(--line);font-size:13px}
+  .prow:first-child{border-top:none}
+  .pname{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ppos{color:var(--mut);font-size:11px;font-weight:700;margin-left:6px}
+  .psrc{color:var(--mut);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+  .psal{font-weight:800;font-variant-numeric:tabular-nums;min-width:44px;text-align:right}
+  .src-auction{color:var(--txt)} .src-faab{color:var(--gold)} .src-rookie{color:var(--accent)} .src-fa{color:var(--mut)}
+
+  /* trade builder */
+  .trade-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:720px){.trade-grid{grid-template-columns:1fr}}
+  .side{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:14px}
+  .side h3{margin:0 0 10px;font-size:14px;font-weight:800}
+  select.teamsel{width:100%;background:var(--panel2);color:var(--txt);border:1px solid var(--line);
+                 border-radius:8px;padding:8px 10px;font-size:13px;font-weight:700;margin-bottom:10px}
+  .picklist{max-height:280px;overflow-y:auto;border:1px solid var(--line);border-radius:8px;padding:6px}
+  .pick{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:6px;cursor:pointer;font-size:13px}
+  .pick:hover{background:var(--panel2)}
+  .pick input{accent-color:var(--accent);cursor:pointer}
+  .pick .nm{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pick .amt{font-weight:800;font-variant-numeric:tabular-nums;color:var(--mut)}
+  .pick.sel .amt{color:var(--txt)}
+
+  .result{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:16px;margin-top:14px}
+  .rline{display:grid;grid-template-columns:1fr auto;gap:10px;padding:7px 0;font-size:14px;border-top:1px solid var(--line)}
+  .rline:first-child{border-top:none}
+  .rline .lab{color:var(--mut)}
+  .rline .val{font-weight:800;font-variant-numeric:tabular-nums}
+  .rbig{font-size:15px;font-weight:800}
+  .verdict{margin-top:12px;padding:12px;border-radius:9px;font-weight:800;font-size:14px;text-align:center}
+  .verdict.ok{background:rgba(51,224,138,.10);color:var(--grn);border:1px solid var(--grn)}
+  .verdict.bad{background:rgba(255,96,96,.10);color:var(--red);border:1px solid var(--red)}
+  .swap-note{color:var(--mut);font-size:11.5px;margin-top:8px;text-align:center}
+  .foot{color:var(--mut);font-size:11.5px;margin-top:26px;text-align:center;line-height:1.6}
+  .hide{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Busch Apple — Salary & Trade Tool</h1>
+    <div class="sub" id="sub">Loading live salaries from Sleeper…</div>
+    <div class="capnote">Cap per team: <b id="capLabel">$365</b> · salaries pulled live from Sleeper on each load. Honest calculator, no fair/unfair verdict.</div>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="table">Salary Table</div>
+    <div class="tab" data-tab="trade">Trade Builder</div>
+  </div>
+
+  <div class="bar">
+    <button class="btn primary" id="refreshBtn">↻ Refresh</button>
+    <span class="status" id="status"></span>
+    <label class="status" style="margin-left:auto"><input type="checkbox" id="autoRefresh"> auto-refresh 60s</label>
+  </div>
+
+  <div id="errbox"></div>
+
+  <div id="pane-table"><div class="loading">Loading…</div></div>
+  <div id="pane-trade" class="hide"><div class="loading">Loading…</div></div>
+
+  <div class="foot" id="foot"></div>
+</div>
+
+<script>
+/* =============================================================================
+   Busch Apple Salary & Trade Tool — standalone, public Sleeper API only.
+   Salary resolver ported from the proven audit_salaries.mjs (auction → FAAB bid
+   → rookie scale → $1 floor). Cap is a CONFIG value (365 now, flip to 515 if the
+   league vote passes) — do not hardcode elsewhere.
+   ============================================================================= */
+
+// ---- CONFIG ----
+const CAP = 365;                    // <-- one-line flip to 515 if the $515 vote passes
+const LEAGUE_ID = "1372256037666574336";
+const SEASON = "2026";
+const API = "https://api.sleeper.app/v1";
+const PLAYERS_KEY = "busch_players_nfl_v1", PLAYERS_TS = "busch_players_nfl_ts", PLAYERS_TTL = 1000*60*60*24;
+
+// rookie salary scale by round.slot (round.pick, slot zero-padded to 2)
+const ROOKIE_SCALE = {
+  "1.01":10,"1.02":10,"1.03":9,"1.04":9,"1.05":9,"1.06":8,"1.07":8,"1.08":8,"1.09":7,"1.10":7,
+  "2.01":7,"2.02":6,"2.03":6,"2.04":6,"2.05":5,"2.06":5,"2.07":5,"2.08":4,"2.09":4,"2.10":4,
+  "3.01":3,"3.02":3,"3.03":3,"3.04":2,"3.05":2,"3.06":2,"3.07":1,"3.08":1,"3.09":1,"3.10":1
+};
+
+// official sheet name <- Sleeper display_name
+const OWNER = {
+  rearmostzeus:"Zach", Nyquilbandit:"Henry", Sdljunce:"Seth", ChayDyck:"Chay", RileyHeid13:"Riley",
+  JunceBoxes:"Nick", charliehorejsi:"Charlie", TheZynBandit:"Bobby", DaBigDyck:"Ajay", BigBomboclaat69:"Jonah"
+};
+
+// ---- state ----
+let TEAMS = [];          // [{roster_id, owner, sn, players:[{pid,name,pos,amt,src}], total, room}]
+let PLAYERS = null;      // sleeper player dictionary (slim)
+let AUTO = null;         // auto-refresh interval handle
+let ACTIVE_TAB = "table";
+// trade selections: {A:{teamIdx, Set(pid)}, B:{...}}
+const TRADE = { A:{teamIdx:null, sel:new Set()}, B:{teamIdx:null, sel:new Set()} };
+
+async function j(url){ const r = await fetch(url, {cache:"no-store"}); if(!r.ok) throw new Error(`${r.status} ${url.split("/v1/")[1]||url}`); return r.json(); }
+
+// ---- load the (big) player dictionary, cached 24h ----
+async function loadPlayers(){
+  try{
+    const ts = +(localStorage.getItem(PLAYERS_TS)||0), cached = localStorage.getItem(PLAYERS_KEY);
+    if(cached && (Date.now()-ts) < PLAYERS_TTL) return JSON.parse(cached);
+  }catch(e){}
+  const all = await j(`${API}/players/nfl`);
+  const slim = {};
+  for(const id in all){ const p = all[id]; if(!p) continue;
+    slim[id] = { n: p.full_name || `${p.first_name||""} ${p.last_name||""}`.trim() || id, pos: p.position || "?" }; }
+  try{ localStorage.setItem(PLAYERS_KEY, JSON.stringify(slim)); localStorage.setItem(PLAYERS_TS, String(Date.now())); }catch(e){}
+  return slim;
+}
+
+// ---- build the salary maps from live Sleeper data ----
+async function buildSalaries(){
+  const [rosters, users, drafts, players] = await Promise.all([
+    j(`${API}/league/${LEAGUE_ID}/rosters`),
+    j(`${API}/league/${LEAGUE_ID}/users`),
+    j(`${API}/league/${LEAGUE_ID}/drafts`),
+    loadPlayers(),
+  ]);
+  PLAYERS = players;
+  const uById = Object.fromEntries(users.map(u => [u.user_id, u.display_name || u.username]));
+
+  // 1) auction: merge all auction drafts oldest-first, newest amount wins
+  const auc = {};
+  const auctions = drafts.filter(d => d.type === "auction").sort((a,b) => (a.start_time||0) - (b.start_time||0));
+  for(const d of auctions){
+    const picks = await j(`${API}/draft/${d.draft_id}/picks`);
+    for(const p of picks){ const a = p.metadata && p.metadata.amount; if(p.player_id != null && a != null) auc[String(p.player_id)] = Number(a); }
+  }
+  // 3) rookie: linear/non-auction drafts, round.slot -> scale
+  const rook = {};
+  for(const d of drafts.filter(d => d.type !== "auction")){
+    const picks = await j(`${API}/draft/${d.draft_id}/picks`);
+    for(const p of picks){ const s = `${p.round}.${String(p.draft_slot).padStart(2,"0")}`; if(p.player_id != null && ROOKIE_SCALE[s] != null) rook[String(p.player_id)] = ROOKIE_SCALE[s]; }
+  }
+  // 2) FAAB: completed adds with a waiver_bid across weeks 1-18
+  const faab = {};
+  for(let wk=1; wk<=18; wk++){
+    let txns = [];
+    try{ txns = await j(`${API}/league/${LEAGUE_ID}/transactions/${wk}`); }catch(e){ continue; }
+    for(const x of (txns||[])){
+      if(x.status !== "complete") continue;
+      const bid = x.settings && x.settings.waiver_bid;
+      if(x.adds && bid != null) for(const pid of Object.keys(x.adds)) faab[pid] = Number(bid);
+    }
+  }
+
+  // resolver: auction -> FAAB bid -> rookie scale -> $1 floor
+  function sal(pid){ pid = String(pid);
+    if(auc[pid] != null) return { amt: auc[pid], src: "auction" };
+    if(faab[pid] != null) return { amt: faab[pid], src: "faab" };
+    if(rook[pid] != null) return { amt: rook[pid], src: "rookie" };
+    return { amt: 1, src: "fa" };
+  }
+  const nm = pid => (PLAYERS[pid] ? PLAYERS[pid].n : `id ${pid}`);
+  const pos = pid => (PLAYERS[pid] ? PLAYERS[pid].pos : "?");
+
+  const teams = rosters.map(r => {
+    const sn = uById[r.owner_id] || "?";
+    const owner = OWNER[sn] || sn;
+    const ps = (r.players||[]).map(pid => ({ pid: String(pid), name: nm(pid), pos: pos(pid), ...sal(pid) }))
+                              .sort((a,b) => b.amt - a.amt || a.name.localeCompare(b.name));
+    const total = ps.reduce((s,p) => s + p.amt, 0);
+    return { roster_id: r.roster_id, owner, sn, players: ps, total, room: CAP - total };
+  }).sort((a,b) => b.total - a.total);
+
+  return teams;
+}
+
+// ---- render: salary table ----
+function renderTable(){
+  const el = document.getElementById("pane-table");
+  if(!TEAMS.length){ el.innerHTML = `<div class="loading">No teams.</div>`; return; }
+  const s = [];
+  for(const t of TEAMS){
+    const overCap = t.total > CAP;
+    const pct = Math.min(100, Math.round(t.total / CAP * 100));
+    const roomCls = t.room < 0 ? "room-over" : "room-ok";
+    const roomTxt = t.room < 0 ? `$${Math.abs(t.room)} over` : `$${t.room} room`;
+    s.push(`<div class="team">
+      <div class="team-head" data-toggle="${t.roster_id}">
+        <div class="team-name">${esc(t.owner)} <span class="sn">@${esc(t.sn)}</span></div>
+        <div class="team-fin">
+          <span class="team-total">$${t.total}<span style="color:var(--mut);font-weight:600;font-size:12px"> / ${CAP}</span></span>
+          <span class="team-room ${roomCls}">${roomTxt}</span>
+        </div>
+      </div>
+      <div style="padding:0 14px"><div class="capbar"><div class="fill ${overCap?'over':''}" style="width:${pct}%"></div></div></div>
+      <div class="roster">
+        ${t.players.map(p => `<div class="prow">
+          <span class="pname">${esc(p.name)}<span class="ppos">${esc(p.pos)}</span></span>
+          <span class="psrc src-${p.src==='fa'?'fa':p.src}">${srcLabel(p.src)}</span>
+          <span class="psal">$${p.amt}</span>
+        </div>`).join("")}
+      </div>
+    </div>`);
+  }
+  el.innerHTML = s.join("");
+  el.querySelectorAll("[data-toggle]").forEach(h => h.addEventListener("click", () => {
+    const roster = h.parentElement.querySelector(".roster");
+    roster.style.display = roster.style.display === "none" ? "" : "none";
+  }));
+}
+function srcLabel(src){ return src==="auction"?"auction":src==="faab"?"FAAB":src==="rookie"?"rookie":"FA $1"; }
+
+// ---- render: trade builder ----
+function renderTrade(){
+  const el = document.getElementById("pane-trade");
+  if(!TEAMS.length){ el.innerHTML = `<div class="loading">No teams.</div>`; return; }
+  const teamOpts = (selIdx) => TEAMS.map((t,i) =>
+    `<option value="${i}" ${selIdx===i?"selected":""}>${esc(t.owner)} ($${t.total})</option>`).join("");
+
+  function sidePanel(sideKey, label){
+    const st = TRADE[sideKey];
+    const teamSel = `<select class="teamsel" data-side="${sideKey}">
+        <option value="">— pick a team —</option>${teamOpts(st.teamIdx)}</select>`;
+    let list = `<div class="status">Select a team to see its roster.</div>`;
+    if(st.teamIdx != null && TEAMS[st.teamIdx]){
+      const t = TEAMS[st.teamIdx];
+      list = `<div class="picklist">` + t.players.map(p =>
+        `<label class="pick ${st.sel.has(p.pid)?'sel':''}">
+          <input type="checkbox" data-side="${sideKey}" data-pid="${p.pid}" ${st.sel.has(p.pid)?"checked":""}>
+          <span class="nm">${esc(p.name)}<span class="ppos">${esc(p.pos)}</span></span>
+          <span class="amt">$${p.amt}</span>
+        </label>`).join("") + `</div>`;
+    }
+    return `<div class="side"><h3>${label}</h3>${teamSel}${list}</div>`;
+  }
+
+  el.innerHTML = `<div class="trade-grid">
+      ${sidePanel("A","Team A gives")}
+      ${sidePanel("B","Team B gives")}
+    </div>
+    <div id="tradeResult"></div>`;
+
+  el.querySelectorAll("select.teamsel").forEach(sel => sel.addEventListener("change", e => {
+    const side = e.target.dataset.side;
+    TRADE[side].teamIdx = e.target.value === "" ? null : Number(e.target.value);
+    TRADE[side].sel = new Set();  // reset selections when team changes
+    renderTrade();
+  }));
+  el.querySelectorAll(".pick input").forEach(cb => cb.addEventListener("change", e => {
+    const side = e.target.dataset.side, pid = e.target.dataset.pid;
+    if(e.target.checked) TRADE[side].sel.add(pid); else TRADE[side].sel.delete(pid);
+    renderTradeResult();
+  }));
+  renderTradeResult();
+}
+
+function sumSelected(sideKey){
+  const st = TRADE[sideKey]; if(st.teamIdx == null) return 0;
+  const t = TEAMS[st.teamIdx];
+  return t.players.filter(p => st.sel.has(p.pid)).reduce((s,p) => s + p.amt, 0);
+}
+
+function renderTradeResult(){
+  const box = document.getElementById("tradeResult"); if(!box) return;
+  const a = TRADE.A, b = TRADE.B;
+  if(a.teamIdx == null || b.teamIdx == null){
+    box.innerHTML = `<div class="result"><div class="status">Pick a team on each side to build a trade.</div></div>`;
+    return;
+  }
+  if(a.teamIdx === b.teamIdx){
+    box.innerHTML = `<div class="result"><div class="verdict bad">Pick two different teams.</div></div>`;
+    return;
+  }
+  const tA = TEAMS[a.teamIdx], tB = TEAMS[b.teamIdx];
+  const outA = sumSelected("A");  // A gives -> goes to B
+  const outB = sumSelected("B");  // B gives -> goes to A
+  // projected totals: remove what you give, add what you receive
+  const projA = tA.total - outA + outB;
+  const projB = tB.total - outB + outA;
+  const roomA = CAP - projA, roomB = CAP - projB;
+  const overA = projA > CAP, overB = projB > CAP;
+
+  const teamLine = (t, out, inc, proj, room, over) => `
+    <div class="rline"><span class="lab">${esc(t.owner)} now</span><span class="val">$${t.total}</span></div>
+    <div class="rline"><span class="lab">gives / receives</span><span class="val">-$${out} / +$${inc}</span></div>
+    <div class="rline"><span class="lab rbig">${esc(t.owner)} after</span><span class="val rbig ${over?'room-over':''}">$${proj} / ${CAP}</span></div>
+    <div class="rline"><span class="lab">room after</span><span class="val ${room<0?'room-over':'room-ok'}">${room<0?`$${Math.abs(room)} over`:`$${room} room`}</span></div>`;
+
+  const anyOver = overA || overB;
+  const verdict = anyOver
+    ? `<div class="verdict bad">Over cap: ${[overA?tA.owner:null, overB?tB.owner:null].filter(Boolean).join(" and ")} would exceed $${CAP}.</div>`
+    : `<div class="verdict ok">Both teams fit under $${CAP}.</div>`;
+
+  box.innerHTML = `<div class="result">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+        <div>${teamLine(tA, outA, outB, projA, roomA, overA)}</div>
+        <div>${teamLine(tB, outB, outA, projB, roomB, overB)}</div>
+      </div>
+      ${verdict}
+      <div class="swap-note">Salary travels with the player (auction or FAAB origin alike). Cap = $${CAP} (config).</div>
+    </div>`;
+}
+
+function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+// ---- load + paint ----
+async function load(){
+  const status = document.getElementById("status");
+  const errbox = document.getElementById("errbox");
+  errbox.innerHTML = "";
+  status.textContent = "Pulling live data…";
+  try{
+    TEAMS = await buildSalaries();
+    // reconcile any active trade selections against the fresh rosters
+    for(const k of ["A","B"]){ const st = TRADE[k];
+      if(st.teamIdx != null && !TEAMS[st.teamIdx]) { st.teamIdx = null; st.sel = new Set(); } }
+    document.getElementById("sub").textContent =
+      `${TEAMS.length} teams · season ${SEASON} · salaries: auction → FAAB bid → rookie scale → $1`;
+    document.getElementById("capLabel").textContent = `$${CAP}`;
+    renderTable(); renderTrade();
+    const now = new Date().toLocaleTimeString();
+    status.textContent = `Updated ${now}`;
+    document.getElementById("foot").innerHTML =
+      `Live from the public Sleeper API on each load. Salary = auction price, else FAAB winning bid, else rookie-scale, else $1 free-agent. ` +
+      `Cap is a config value (currently $${CAP}). No fair/unfair judgment — just the numbers.`;
+  }catch(e){
+    errbox.innerHTML = `<div class="err">Couldn't load: ${esc(e.message)}. Try Refresh.</div>`;
+    status.textContent = "";
+  }
+}
+
+// ---- tab switching ----
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+  ACTIVE_TAB = t.dataset.tab;
+  document.querySelectorAll(".tab").forEach(x => x.classList.toggle("active", x===t));
+  document.getElementById("pane-table").classList.toggle("hide", ACTIVE_TAB!=="table");
+  document.getElementById("pane-trade").classList.toggle("hide", ACTIVE_TAB!=="trade");
+}));
+
+document.getElementById("refreshBtn").addEventListener("click", load);
+document.getElementById("autoRefresh").addEventListener("change", e => {
+  if(e.target.checked){ AUTO = setInterval(load, 60000); }
+  else { clearInterval(AUTO); AUTO = null; }
+});
+
+load();
+</script>
+</body>
+</html>
