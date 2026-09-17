@@ -19,8 +19,11 @@ Verified for Busch Apple: only 2 traded picks exist right now:
 So to show FULL draft capital per team, build it as: DEFAULT baseline picks (every team starts with their own
 picks) MINUS traded-away + PLUS acquired, using the traded_picks endpoint to adjust.
 
-**DEFAULT baseline (CONFIRM w/ Nick — from the auction sheet):** each team starts with their own
-1st, 2nd, 3rd round pick for 2027, 2028, 2029 (= 9 future picks each) before trades. [Nick to confirm years/rounds.]
+**DEFAULT baseline (CONFIRMED by Nick):** each team starts with their own 1st, 2nd, 3rd round pick for
+2027, 2028, 2029 = **9 future picks each** (3 years × 3 rounds) before trades. League trades 3 years out.
+VERIFIED against Nick's real Sleeper picks: his list is 2027 1st, 2027 3rd, 2028 1/2/3, 2029 1/2/3 = 8 picks —
+the missing 2027 2nd is exactly the one he traded to Henry (matches Sleeper traded_picks). So the model
+"9 defaults − traded-away + acquired" reproduces Sleeper's display exactly. Build it that way.
 
 - Render each team's future picks (e.g. "2027 1st", "2028 2nd") as tradeable ASSETS.
 - Picks carry **$0 salary** — they do NOT affect the cap math (a pick only gets a rookie-scale salary when a
