@@ -33,3 +33,8 @@ Local git repo initialized + committed (`f565c7e`, 4 files). Attempted `gh repo 
 
 ## 2026-09-16 — Repo created + pushed (token re-auth resolved) — DONE
 Nick regenerated the GitHub PAT, so the stale-token block is cleared. Created private repo `ndjunce/busch-apple-trade-tool` and pushed v1 (index.html + README + DECISION_LOG + .gitignore), local/origin in sync (0/0). All 4 files confirmed on remote. REMAINING: Nick imports the repo into Vercel (framework = Other / static, no build settings) and pastes the .vercel.app URL to add to the README + share with the league. CAP still = 365 (current live rule); flip to 515 if/when the league vote passes.
+
+
+## 2026-09-16 — v1 LIVE on Vercel + v2 QoL spec written — vote 8/10 yes
+v1 deployed: preview URL https://busch-apple-trade-tool-dokpbm9sb-fun-fun-fun1.vercel.app/ (Nick to switch to the clean PRODUCTION domain — Settings→Domains, likely busch-apple-trade-tool.vercel.app, or rename project shorter). League vote on the $515 cap = 8 yes, awaiting 2.
+Nick requested QoL v2 (spec: `V2_QOL_SPEC.md`): (1) REMOVE the source badge (auction/rookie/FAAB/FA$1) — label is cosmetically wrong for some; $ amounts are audited-correct, so just hide the tag, don't touch dollar logic; (2) player images/team logos per row (espn_id→team logo→initial fallback); (3) per-team sort + filter (salary/pos/name; filter by pos); (4) SPLASH landing + multi-team select (view 1–4 teams side by side, plus show-all); (5) same select/logos/filter niceties on the trade-tool tab; (6) shorter URL (Nick action, Vercel domain — no code). Guardrails: standalone only, live Sleeper, CAP config stays 365 until vote passes, mobile-first no-overflow, re-verify totals after refactor. NEXT: EDIT chat builds v2 from V2_QOL_SPEC.md.
