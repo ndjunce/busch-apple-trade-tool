@@ -110,3 +110,8 @@ Last small polish before Nick shares it. Surfaced each player's NFL team (BUF, S
 - Used in exactly 2 render spots (Teams card `.prow`, Trade panel `.pick`). New `.pteam` CSS: 10.5px muted, small left margin, inside the existing ellipsis-clamped name span so it can't push rows off-screen (mobile-safe at ~390px).
 - **Untouched:** resolver dollar logic (sal() intact), neutral cap (SHOW_CAP=false), $0 picks. Verified via node: JS parses clean, teamTag used ×2, player.team populated, sal() unchanged, SHOW_CAP still false.
 **Freeze before v5:** tag `good-busch-v4` → 281d0ec. Commit author = ndjunce/noreply. Blast radius: this repo's index.html only.
+
+
+## 2026-09-16 — VOTE PASSED (10/10): flipped to $515 cap + SHOW_CAP=true — LIVE
+League unanimously adopted the $515 combined cap. Flipped the two config values in index.html: `CAP` 365→515 and `SHOW_CAP` false→true (the gate built in v4). Cap display is now ON: teams show total / $515, room remaining, and over-cap flags return. Verified live against Sleeper under $515: ALL 10 TEAMS COMPLIANT — Ajay $426 (room $89, tightest), Henry $372, Riley $367, Chay $359, Jonah $358, Bobby $356, Nick $356, Zach $353, Charlie $334, Seth $331. Nobody over → everyone has real trade headroom ($89–$184). JS parses clean; resolver dollar logic untouched (only the 2 config values + comments changed). Committed + pushed; Vercel auto-deploys. The tool is now fully live in $515-enforcement mode for the league.
+(Note: v5 player-NFL-team labels shipped just before this, per prior entry.)
