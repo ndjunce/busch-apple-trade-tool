@@ -29,3 +29,7 @@ Standalone site per spec (NOT bolted onto the personal dashboard or CAN AM tools
 Local git repo initialized + committed (`f565c7e`, 4 files). Attempted `gh repo create ndjunce/busch-apple-trade-tool --public --push` → **HTTP 401 Bad credentials**. `gh auth status`: "The token in keyring is invalid." Token went stale mid-session (it worked for the portfolio push earlier today). Cannot re-auth headlessly — needs the user's interactive `gh auth login`.
 - **User action to unblock:** (1) `gh auth login -h github.com` (or set a fresh token). (2) re-run `gh repo create ndjunce/busch-apple-trade-tool --public --source=. --remote=origin --push` from the tool folder. (3) import the repo to Vercel (framework = Other / static, no build step) → get the .vercel.app URL. Then add the URL to README + this log.
 - Nothing lost — v1 is fully built + committed + resolver-verified locally.
+
+
+## 2026-09-16 — Repo created + pushed (token re-auth resolved) — DONE
+Nick regenerated the GitHub PAT, so the stale-token block is cleared. Created private repo `ndjunce/busch-apple-trade-tool` and pushed v1 (index.html + README + DECISION_LOG + .gitignore), local/origin in sync (0/0). All 4 files confirmed on remote. REMAINING: Nick imports the repo into Vercel (framework = Other / static, no build settings) and pastes the .vercel.app URL to add to the README + share with the league. CAP still = 365 (current live rule); flip to 515 if/when the league vote passes.
