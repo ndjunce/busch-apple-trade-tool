@@ -102,3 +102,11 @@ Small polish round to keep the site non-inflammatory while the $515 vote is stil
 
 ## 2026-09-16 — v5 spec: add player NFL team to rows (Teams + Trade tabs) — last polish before sharing
 Nick's final ask before sending to league: show each player's NFL team (BUF, SF, etc.) on their row, on both the Teams-tab cards and the Trade-builder panels. Data already available (Sleeper players dict `team`, already cached for the logo fallback) — just surface it as a compact muted label / small team logo next to name/pos. FA/no-team → blank or "FA", don't fabricate. Display-only; resolver + neutral cap (SHOW_CAP=false) + $0 picks all unchanged. Mobile-first (label must not overflow at 390px). Spec: `V5_SPEC.md`. NEXT: EDIT chat builds v5, then Nick shares with league.
+
+## 2026-09-16 — v5: show player NFL team on rows — WORKS (display-only)
+Last small polish before Nick shares it. Surfaced each player's NFL team (BUF, SF, etc.) as a compact muted label on their row, on BOTH the Teams-tab cards and the Trade-builder panels.
+- Data was already there: player object carries `team` (`p.t` from the cached Sleeper dict, already used for the logo fallback). No new fetch, no cache bump.
+- Added `teamTag(p)` helper → `<span class="pteam">· BUF</span>`; free agents / no pro team show "· FA" (never fabricated). Small muted uppercase tag next to the position, same visual weight as `.ppos`.
+- Used in exactly 2 render spots (Teams card `.prow`, Trade panel `.pick`). New `.pteam` CSS: 10.5px muted, small left margin, inside the existing ellipsis-clamped name span so it can't push rows off-screen (mobile-safe at ~390px).
+- **Untouched:** resolver dollar logic (sal() intact), neutral cap (SHOW_CAP=false), $0 picks. Verified via node: JS parses clean, teamTag used ×2, player.team populated, sal() unchanged, SHOW_CAP still false.
+**Freeze before v5:** tag `good-busch-v4` → 281d0ec. Commit author = ndjunce/noreply. Blast radius: this repo's index.html only.

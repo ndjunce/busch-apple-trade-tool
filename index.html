@@ -100,6 +100,7 @@
   .prow:first-child{border-top:none}
   .pname{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
   .ppos{color:var(--mut);font-size:11px;font-weight:700;margin-left:6px}
+  .pteam{color:var(--mut);font-size:10.5px;font-weight:700;margin-left:5px;text-transform:uppercase;letter-spacing:.03em;opacity:.85}
   .psal{font-weight:800;font-variant-numeric:tabular-nums;min-width:40px;text-align:right}
   .subhd{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--mut);
          padding:10px 0 2px;border-top:1px solid var(--line);margin-top:4px}
@@ -245,6 +246,8 @@ function teamByRid(rid){ return TEAMS.find(t => t.roster_id === rid) || null; }
 function ownerNameOfRid(rid){ const t = teamByRid(rid); return t ? t.owner : `#${rid}`; }
 // pick label with "(via X)" when the pick originated from a different team than the current holder
 function pickLabel(pk, holderRid){ return pk.origRid !== holderRid ? `${pk.label} (via ${esc(ownerNameOfRid(pk.origRid))})` : pk.label; }
+// compact NFL team label for a player row (e.g. "· BUF"); "FA" if no pro team; never fabricated
+function teamTag(p){ const t = (p.team||"").toUpperCase(); return `<span class="pteam">· ${t?esc(t):"FA"}</span>`; }
 
 // ---- player images (headshot -> team logo -> position initial) ----
 function headshotUrl(espnId){ return `https://a.espncdn.com/i/headshots/nfl/players/full/${espnId}.png`; }
@@ -431,7 +434,7 @@ function teamCard(t){
     <div class="roster">
       ${ps.length ? ps.map(p => `<div class="prow">
         ${playerImg(p)}
-        <span class="pname">${esc(p.name)}<span class="ppos">${esc(p.pos)}</span></span>
+        <span class="pname">${esc(p.name)}<span class="ppos">${esc(p.pos)}</span>${teamTag(p)}</span>
         <span class="psal">$${p.amt}</span>
       </div>`).join("") : `<div class="status" style="padding:8px 0">No players at this position.</div>`}
       ${picksHtml}
@@ -550,7 +553,7 @@ function paintTrade(){
       return `<div class="pick ${on?'sel':''}">
         <input type="checkbox" data-asset="player" data-rid="${rid}" data-pid="${p.pid}" ${on?"checked":""}>
         ${playerImg(p)}
-        <span class="nm">${esc(p.name)}<span class="ppos">${esc(p.pos)}</span></span>
+        <span class="nm">${esc(p.name)}<span class="ppos">${esc(p.pos)}</span>${teamTag(p)}</span>
         ${dest || `<span class="amt">$${p.amt}</span>`}
       </div>`;
     }).join("");
