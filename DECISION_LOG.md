@@ -98,3 +98,7 @@ Small polish round to keep the site non-inflammatory while the $515 vote is stil
 
 **Verified:** (a) `<script>` parses clean (node `new Function()`); (b) confirmed every cap/over/room/red output is behind `SHOW_CAP` (grep + read of teamCard `overCap`, renderTradeResult `over`/`afterLine`/verdict); (c) salary totals re-run vs live — **9/10 exact**, Zach $353 vs $354 = the SAME $1 live-data drift as v3 (resolver untouched, not a v4 regression). Picks still $0, never counted.
 **CAP=365 / SHOW_CAP=false.** **Freeze before v4:** tag `good-busch-v3` → 6868e94. Commit author = ndjunce/noreply (Vercel-linked) per repo git config. Blast radius: this repo's index.html only.
+
+
+## 2026-09-16 — v5 spec: add player NFL team to rows (Teams + Trade tabs) — last polish before sharing
+Nick's final ask before sending to league: show each player's NFL team (BUF, SF, etc.) on their row, on both the Teams-tab cards and the Trade-builder panels. Data already available (Sleeper players dict `team`, already cached for the logo fallback) — just surface it as a compact muted label / small team logo next to name/pos. FA/no-team → blank or "FA", don't fabricate. Display-only; resolver + neutral cap (SHOW_CAP=false) + $0 picks all unchanged. Mobile-first (label must not overflow at 390px). Spec: `V5_SPEC.md`. NEXT: EDIT chat builds v5, then Nick shares with league.
