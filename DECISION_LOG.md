@@ -24,3 +24,8 @@ Standalone site per spec (NOT bolted onto the personal dashboard or CAN AM tools
 **Blast radius:** brand-new folder/repo. Does NOT touch fantasy-dashboard or fantasy_football_project.
 
 **NEXT:** create repo, push, deploy to Vercel, share URL. v2 later = draft-pick trading ($0 salary, slot by final standings).
+
+## 2026-08-14 — v1 committed locally; repo create/push/deploy BLOCKED on gh auth — OPEN (user action)
+Local git repo initialized + committed (`f565c7e`, 4 files). Attempted `gh repo create ndjunce/busch-apple-trade-tool --public --push` → **HTTP 401 Bad credentials**. `gh auth status`: "The token in keyring is invalid." Token went stale mid-session (it worked for the portfolio push earlier today). Cannot re-auth headlessly — needs the user's interactive `gh auth login`.
+- **User action to unblock:** (1) `gh auth login -h github.com` (or set a fresh token). (2) re-run `gh repo create ndjunce/busch-apple-trade-tool --public --source=. --remote=origin --push` from the tool folder. (3) import the repo to Vercel (framework = Other / static, no build step) → get the .vercel.app URL. Then add the URL to README + this log.
+- Nothing lost — v1 is fully built + committed + resolver-verified locally.
