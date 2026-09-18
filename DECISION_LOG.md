@@ -147,3 +147,7 @@ Raised the trade builder's team cap from 4 to 10 (whole league; Sleeper allows 1
 
 **Verified:** built a jsdom harness (mock Sleeper data) that drives the REAL flow — add 3 teams → checkboxes render → check a player → destination `<select>` appears listing the other in-trade teams (→ Bobby, → Zach) → result panel computes. Passes. `node --check` clean. Confirmed the live deploy already had the v6 interactive code (so not a stale-deploy issue) — the fix is the CSS overflow guard. Resolver unchanged, picks $0, CAP=515/SHOW_CAP=true untouched. Removed all test scaffolding (jsdom/node_modules/package.json) so nothing extra ships.
 **Freeze:** rollback = `good-busch-v5` → f92b600. Commit author = ndjunce/noreply.
+
+
+## 2026-09-16 — v7 spec: screenshot-ready trade summary
+Nick wants the trade result to list actual PLAYERS + their salaries per side (not just salary in/out totals) so a manager can SCREENSHOT it and post in the league/Sleeper chat as proof "the tool okayed this." Spec (`V7_SPEC.md`): per team show GIVES (each outgoing player + salary, picks $0) w/ sum, GETS (each incoming + salary) w/ sum, salary BEFORE→AFTER + room vs $515 + over flag; multi-team = per team separated; clean self-contained screenshot-friendly block w/ a "Busch Apple Trade — [date]" header + "all under $515 ✓ / X over" verdict; mobile-legible; OPTIONAL "Copy summary" text button. DISPLAY addition only — existing trade logic (audited resolver, $0 picks, $515, 10-team) unchanged, reuse computed salaries. Plan-chat wrote spec; build = edit chat. ndjunce/noreply.
