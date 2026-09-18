@@ -123,3 +123,16 @@ Old note said a pick "only gets a salary when a rookie is drafted into it" — i
 
 ## 2026-09-16 — v6 spec: allow up to 10-team trades — written (queued)
 Nick wants the multi-team trade builder to support up to 10 teams (whole league), since Sleeper allows 10-team trades in-app. The v3 multi-team model already handles N teams; this is mostly raising the 4→10 cap + ensuring nothing hardcodes 4. Main watch-out: mobile layout with 10 panels (the v4 `.trade-panels` grid should wrap on desktop / stack on mobile — verify at 10, cap column min-width so they wrap not squish); destination dropdown must list all in-trade teams; per-team totals/over-$515 correct for all. Spec: `V6_SPEC.md`. LOW priority vs Nick's work deadline + Tue Sep 22 interviews — build after. NEXT: EDIT chat builds v6 from V6_SPEC.md.
+
+
+## 2026-09-16 — v6 BUILT: multi-team trade limit raised 4 → 10 — WORKS
+Raised the trade builder's team cap from 4 to 10 (whole league; Sleeper allows 10-team trades in-app). The v3 multi-team model already handled N teams (per-asset destination selector + per-team projected totals), so this was raising the cap + de-hardcoding 4 + fixing the layout for 10 panels.
+
+**Changes (index.html only):**
+- Trade-team toggle cap `>= 4` → `>= 10`. Label "Add teams to the trade (2–4)" → "(2–10)".
+- **Layout for 10 panels (the real risk):** replaced the fixed `.trade-panels`/`.rcols` `n{1..4}` column classes with an **auto-fill grid** — `.trade-panels` = `repeat(auto-fill, minmax(260px,1fr))`, `.rcols` (result cards) = `minmax(180px,1fr)`; both stack to 1 column ≤620/560px. So 5–10 panels WRAP to multiple rows on desktop at a readable min-width (not squished slivers) and stack on mobile. Dropped the now-unused `nPanels`/`n` JS computations + `n${...}` classes.
+- Destination dropdown (`destOptions`) + per-team result loop already map over ALL `tradeTeamObjects()` — no hardcoded limit, scale to 10 unchanged.
+- **Left the Teams-tab viewer (`SELECTED`) capped at 4** on purpose — that's the "view 1–4 teams side by side" browse feature, separate from the trade builder; spec was only about trades.
+
+**Verified (node, live Sleeper):** built a 6-team trade — each of the 6 source teams' destination dropdown lists the other 5 (all in-trade teams); moved 3 assets round-robin and per-team projected totals + room + over-$515 flag computed correctly for ALL 6 (e.g. Zach $353 → $442 after receiving Chase $89, room $73, under cap). `<script>` parses clean. Resolver dollar logic UNCHANGED (auction→FAAB→rookie→$1); picks still $0/never counted; CAP=515 / SHOW_CAP=true unchanged.
+**Freeze before v6:** origin was at `f92b600` (last pushed good state). Commit author = ndjunce/noreply (Vercel deploys). Blast radius: this repo's index.html only.
