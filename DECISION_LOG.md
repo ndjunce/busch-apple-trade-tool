@@ -136,3 +136,14 @@ Raised the trade builder's team cap from 4 to 10 (whole league; Sleeper allows 1
 
 **Verified (node, live Sleeper):** built a 6-team trade — each of the 6 source teams' destination dropdown lists the other 5 (all in-trade teams); moved 3 assets round-robin and per-team projected totals + room + over-$515 flag computed correctly for ALL 6 (e.g. Zach $353 → $442 after receiving Chase $89, room $73, under cap). `<script>` parses clean. Resolver dollar logic UNCHANGED (auction→FAAB→rookie→$1); picks still $0/never counted; CAP=515 / SHOW_CAP=true unchanged.
 **Freeze before v6:** origin was at `f92b600` (last pushed good state). Commit author = ndjunce/noreply (Vercel deploys). Blast radius: this repo's index.html only.
+
+
+## 2026-09-16 — v6 REGRESSION FIXED: trade builder couldn't select players/destinations — WORKS
+**Symptom (live):** after v6, could toggle teams into a trade but couldn't select player assets or choose destinations — core function dead.
+
+**Root cause (found by diffing v6 vs `good-busch-v5`):** the render + event-handler code was BYTE-IDENTICAL to v5 (verified — the v6 diff only touched CSS + the 4→10 cap + label + dropping nPanels/n). So it was NOT a logic/handler regression. It was the CSS auto-fill refactor: v5's grid used `repeat(N,1fr)` (tracks sized by container, items can't overflow); v6 switched to `repeat(auto-fill, minmax(260px,1fr))` — a fixed **260px min track**. `.side` panels had **no `min-width:0`**, so a panel whose content (long player names, the width:100% search box) exceeds 260px expanded/overflowed its track, and in a real browser that overflow rendered interactive elements (checkboxes / dest selects) where they couldn't be reliably clicked/tapped. Classic grid-item overflow bug that only manifests with real layout.
+
+**Fix:** `.side{ …; min-width:0; overflow:hidden }` — grid items now clip to their track and can't overflow to block interaction. Kept v6's intent fully: 10-team cap + auto-fill wrapping (desktop wraps to rows, mobile stacks) unchanged.
+
+**Verified:** built a jsdom harness (mock Sleeper data) that drives the REAL flow — add 3 teams → checkboxes render → check a player → destination `<select>` appears listing the other in-trade teams (→ Bobby, → Zach) → result panel computes. Passes. `node --check` clean. Confirmed the live deploy already had the v6 interactive code (so not a stale-deploy issue) — the fix is the CSS overflow guard. Resolver unchanged, picks $0, CAP=515/SHOW_CAP=true untouched. Removed all test scaffolding (jsdom/node_modules/package.json) so nothing extra ships.
+**Freeze:** rollback = `good-busch-v5` → f92b600. Commit author = ndjunce/noreply.

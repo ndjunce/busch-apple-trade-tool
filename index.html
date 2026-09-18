@@ -118,7 +118,7 @@
   /* auto-fill so 2–10 panels WRAP to multiple rows on desktop (readable min width), stack on mobile */
   .trade-panels{display:grid;gap:12px;margin-bottom:6px;grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
   @media(max-width:620px){.trade-panels{grid-template-columns:1fr}}
-  .side{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:14px}
+  .side{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:14px;min-width:0;overflow:hidden}
   .side h3{margin:0 0 8px;font-size:14px;font-weight:800;display:flex;align-items:center;gap:8px}
   .side h3 .oav{width:26px;height:26px;border-radius:50%;object-fit:cover;background:var(--panel2)}
   input.psearch{width:100%;background:var(--panel2);color:var(--txt);border:1px solid var(--line);
