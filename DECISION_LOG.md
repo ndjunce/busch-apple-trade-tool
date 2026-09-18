@@ -115,3 +115,11 @@ Last small polish before Nick shares it. Surfaced each player's NFL team (BUF, S
 ## 2026-09-16 — VOTE PASSED (10/10): flipped to $515 cap + SHOW_CAP=true — LIVE
 League unanimously adopted the $515 combined cap. Flipped the two config values in index.html: `CAP` 365→515 and `SHOW_CAP` false→true (the gate built in v4). Cap display is now ON: teams show total / $515, room remaining, and over-cap flags return. Verified live against Sleeper under $515: ALL 10 TEAMS COMPLIANT — Ajay $426 (room $89, tightest), Henry $372, Riley $367, Chay $359, Jonah $358, Bobby $356, Nick $356, Zach $353, Charlie $334, Seth $331. Nobody over → everyone has real trade headroom ($89–$184). JS parses clean; resolver dollar logic untouched (only the 2 config values + comments changed). Committed + pushed; Vercel auto-deploys. The tool is now fully live in $515-enforcement mode for the league.
 (Note: v5 player-NFL-team labels shipped just before this, per prior entry.)
+
+
+## 2026-09-16 — Reworded draft-pick explainer to match league rule — pushed
+Old note said a pick "only gets a salary when a rookie is drafted into it" — inaccurate. Correct rule: a pick's DRAFT SLOT (and thus salary) is set by FINAL STANDINGS — non-playoff teams ordered at end of regular season, playoff teams fill the rest after the playoffs (NFL-style). Updated the explainer text on the Trade tab accordingly. Picks still trade at $0 in-season (slot unknown until season end) + never count toward cap — that logic unchanged, only the wording. JS parses clean. Commit `f92b600`, pushed, Vercel redeploys.
+
+
+## 2026-09-16 — v6 spec: allow up to 10-team trades — written (queued)
+Nick wants the multi-team trade builder to support up to 10 teams (whole league), since Sleeper allows 10-team trades in-app. The v3 multi-team model already handles N teams; this is mostly raising the 4→10 cap + ensuring nothing hardcodes 4. Main watch-out: mobile layout with 10 panels (the v4 `.trade-panels` grid should wrap on desktop / stack on mobile — verify at 10, cap column min-width so they wrap not squish); destination dropdown must list all in-trade teams; per-team totals/over-$515 correct for all. Spec: `V6_SPEC.md`. LOW priority vs Nick's work deadline + Tue Sep 22 interviews — build after. NEXT: EDIT chat builds v6 from V6_SPEC.md.

@@ -115,13 +115,9 @@
   .tt-note{color:var(--mut);font-size:12px;margin:2px 0 14px}
 
   /* trade panels: side-by-side on desktop, stacked single-column on mobile */
-  .trade-panels{display:grid;gap:12px;margin-bottom:6px}
-  .trade-panels.n1{grid-template-columns:1fr}
-  .trade-panels.n2{grid-template-columns:repeat(2,1fr)}
-  .trade-panels.n3{grid-template-columns:repeat(3,1fr)}
-  .trade-panels.n4{grid-template-columns:repeat(4,1fr)}
-  @media(max-width:900px){.trade-panels.n3,.trade-panels.n4{grid-template-columns:repeat(2,1fr)}}
-  @media(max-width:620px){.trade-panels.n2,.trade-panels.n3,.trade-panels.n4{grid-template-columns:1fr}}
+  /* auto-fill so 2–10 panels WRAP to multiple rows on desktop (readable min width), stack on mobile */
+  .trade-panels{display:grid;gap:12px;margin-bottom:6px;grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+  @media(max-width:620px){.trade-panels{grid-template-columns:1fr}}
   .side{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:14px}
   .side h3{margin:0 0 8px;font-size:14px;font-weight:800;display:flex;align-items:center;gap:8px}
   .side h3 .oav{width:26px;height:26px;border-radius:50%;object-fit:cover;background:var(--panel2)}
@@ -142,12 +138,9 @@
   .dest:focus{outline:none}
 
   .result{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:16px;margin-top:6px}
-  .rcols{display:grid;gap:16px}
-  .rcols.n2{grid-template-columns:repeat(2,1fr)}
-  .rcols.n3{grid-template-columns:repeat(3,1fr)}
-  .rcols.n4{grid-template-columns:repeat(4,1fr)}
-  @media(max-width:820px){.rcols.n3,.rcols.n4{grid-template-columns:repeat(2,1fr)}}
-  @media(max-width:560px){.rcols.n2,.rcols.n3,.rcols.n4{grid-template-columns:1fr}}
+  /* result cards: auto-fill wrap for up to 10 teams, stack on mobile */
+  .rcols{display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}
+  @media(max-width:560px){.rcols{grid-template-columns:1fr}}
   .rteam{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
   .rteam.over{border-color:var(--red)}
   .rteam .rt-name{font-weight:800;font-size:13.5px;margin-bottom:6px}
@@ -525,7 +518,7 @@ function paintTrade(){
   if(!TEAMS.length){ el.innerHTML = `<div class="loading">No teams.</div>`; return; }
 
   // team chooser chips (toggle teams into the trade; 2-4)
-  const chips = `<div class="splash-h">Add teams to the trade (2–4).</div>
+  const chips = `<div class="splash-h">Add teams to the trade (2–10).</div>
     <div class="trade-teams">` + TEAMS.map(t => {
       const on = TRADE_TEAMS.includes(t.roster_id) ? " on" : "";
       return `<div class="tt-chip${on}" data-tteam="${t.roster_id}">${avatarImg(t,"oav")}<span>${esc(t.owner)}</span></div>`;
@@ -582,8 +575,7 @@ function paintTrade(){
     </div>`;
   }
 
-  const nPanels = Math.min(4, TRADE_TEAMS.length);
-  const panelsWrap = TRADE_TEAMS.length>=2 ? `<div class="trade-panels n${nPanels}">${panels}</div>` : "";
+  const panelsWrap = TRADE_TEAMS.length>=2 ? `<div class="trade-panels">${panels}</div>` : "";
   el.innerHTML = capExplainer() + chips + panelsWrap + `<div id="tradeResult"></div>`;
   wireTrade(el);
   renderTradeResult();
@@ -598,7 +590,7 @@ function wireTrade(el){
       // drop any assets from/to this team
       for(const [k,a] of [...TRADE_ASSETS]) if(a.fromRid===rid || a.toRid===rid) TRADE_ASSETS.delete(k);
     } else {
-      if(TRADE_TEAMS.length >= 4) return; // cap at 4 teams
+      if(TRADE_TEAMS.length >= 10) return; // cap at 10 teams (whole league)
       TRADE_TEAMS.push(rid);
     }
     // any asset whose destination is no longer a valid team gets its dest reset
@@ -665,7 +657,6 @@ function renderTradeResult(){
     else { movingPicks[a.fromRid].out++; movingPicks[a.toRid].in++; }
   }
 
-  const n = Math.min(4, teams.length);
   const cards = teams.map(t => {
     const o = out[t.roster_id]||0, i = inc[t.roster_id]||0;
     const proj = t.total - o + i;
@@ -699,7 +690,7 @@ function renderTradeResult(){
     : `Salary travels with the player. Draft picks move at $0. Showing total value only while the league cap vote is open.`;
 
   box.innerHTML = `<div class="result">
-    <div class="rcols n${n}">${cards}</div>
+    <div class="rcols">${cards}</div>
     ${verdict}
     <div class="swap-note">${swapNote}</div>
   </div>`;
