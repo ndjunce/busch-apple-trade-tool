@@ -151,3 +151,16 @@ Raised the trade builder's team cap from 4 to 10 (whole league; Sleeper allows 1
 
 ## 2026-09-16 — v7 spec: screenshot-ready trade summary
 Nick wants the trade result to list actual PLAYERS + their salaries per side (not just salary in/out totals) so a manager can SCREENSHOT it and post in the league/Sleeper chat as proof "the tool okayed this." Spec (`V7_SPEC.md`): per team show GIVES (each outgoing player + salary, picks $0) w/ sum, GETS (each incoming + salary) w/ sum, salary BEFORE→AFTER + room vs $515 + over flag; multi-team = per team separated; clean self-contained screenshot-friendly block w/ a "Busch Apple Trade — [date]" header + "all under $515 ✓ / X over" verdict; mobile-legible; OPTIONAL "Copy summary" text button. DISPLAY addition only — existing trade logic (audited resolver, $0 picks, $515, 10-team) unchanged, reuse computed salaries. Plan-chat wrote spec; build = edit chat. ndjunce/noreply.
+
+## 2026-09-18 — v7: screenshot-ready trade summary — WORKS (display only)
+Added a self-contained, screenshot-friendly summary block to the trade result panel. Reuses the salaries already computed for the trade — NO refetch, NO logic change (audited resolver, picks $0, $515 cap, 10-team all unchanged).
+
+**Per team in the trade:** owner name + avatar; **GIVES** list (each outgoing player + salary, picks $0) with a sum; **GETS** list (each incoming asset + salary) with a sum; salary **before → after** with room vs $515 and an over-cap flag (red). Multi-team (3+) handled — each asset appears under the receiving team's GETS, so destinations are implied.
+- Header: "Busch Apple Trade — [date]". Verdict line: "✓ All teams under $515" or "✗ [names] over $515". Honest foot: salaries via audited resolver, picks $0.
+- Cap-aware: when SHOW_CAP is off it shows before→after value only (no room/over/verdict), consistent with the rest of the tool.
+- **"Copy summary" button** (nice-to-have from spec): copies a plain-text version (team / gives / gets / totals / result) to the clipboard for pasting into league/Sleeper chat, with a "Copied!" confirmation + graceful fallback message.
+
+**Screenshot/mobile:** self-contained `.ts-card`; gives/gets in a 2-col grid that collapses to 1 col ≤420px; tabular-num salaries; no horizontal cutoff.
+
+**Verified (jsdom, real 3-team trade):** summary renders with dated header, correct per-team gives/gets + sums, before→after + room ($41→$163/515 $352 room, etc.), "✓ All teams under $515" verdict; copy button + buildTradeText present; JS parses clean. Removed all test scaffolding (jsdom/node_modules) — nothing extra ships.
+**Freeze before:** v6 at 2a6ee00 (tag good-busch-v6). Commit ndjunce/noreply. Blast radius: index.html result-panel render + CSS only.

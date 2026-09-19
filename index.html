@@ -153,6 +153,32 @@
   .verdict.bad{background:rgba(255,96,96,.10);color:var(--red);border:1px solid var(--red)}
   .swap-note{color:var(--mut);font-size:11.5px;margin-top:8px;text-align:center;line-height:1.5}
   .foot{color:var(--mut);font-size:11.5px;margin-top:26px;text-align:center;line-height:1.6}
+  /* screenshot-ready trade summary */
+  .ts-card{margin-top:16px;border:1px solid var(--line);border-radius:12px;background:var(--panel2);padding:14px 16px}
+  .ts-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:12px}
+  .ts-title{font-weight:800;font-size:16px}
+  .ts-date{color:var(--mut);font-size:12px;font-weight:600}
+  .ts-teams{display:flex;flex-direction:column;gap:12px}
+  .ts-team{border:1px solid var(--line);border-radius:10px;padding:11px 12px;background:var(--panel)}
+  .ts-team.over{border-color:var(--red)}
+  .ts-tname{display:flex;align-items:center;gap:8px;font-weight:800;font-size:14px;margin-bottom:9px}
+  .ts-av{width:24px;height:24px;flex:0 0 24px;border-radius:50%;object-fit:cover;background:var(--panel2)}
+  .ts-cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:420px){.ts-cols{grid-template-columns:1fr;gap:8px}}
+  .ts-h{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+  .ts-h.gives{color:var(--red)} .ts-h.gets{color:var(--grn)}
+  .ts-list{list-style:none;margin:0;padding:0}
+  .ts-list li{font-size:13px;font-weight:600;padding:2px 0;display:flex;justify-content:space-between;gap:10px}
+  .ts-amt{color:var(--mut);font-weight:800;font-variant-numeric:tabular-nums;flex:0 0 auto}
+  .ts-sub{font-size:12px;font-weight:800;color:var(--txt);margin-top:4px;border-top:1px dashed var(--line);padding-top:3px}
+  .ts-none{color:var(--mut);font-size:13px}
+  .ts-after{margin-top:10px;padding-top:9px;border-top:1px solid var(--line);font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
+  .ts-after b{font-weight:800} .ts-over{color:var(--red)}
+  .ts-verdict{margin-top:12px;padding:9px;border-radius:8px;text-align:center;font-weight:800;font-size:14px}
+  .ts-verdict.ok{color:var(--grn);background:rgba(51,224,138,.10);border:1px solid var(--grn)}
+  .ts-verdict.bad{color:var(--red);background:rgba(255,96,96,.10);border:1px solid var(--red)}
+  .ts-foot{color:var(--mut);font-size:11px;text-align:center;margin-top:10px}
+  .ts-actions{display:flex;align-items:center;gap:10px;margin-top:10px}
   .hide{display:none}
 </style>
 </head>
@@ -689,11 +715,101 @@ function renderTradeResult(){
     ? `Salary travels with the player. Draft picks move at $0 and never count toward the cap. Cap = $${CAP}.`
     : `Salary travels with the player. Draft picks move at $0. Showing total value only while the league cap vote is open.`;
 
+  // ---- screenshot-ready summary (display only; reuses the salaries already computed) ----
+  let summaryHtml = "";
+  if(anyAsset){
+    // per-team gives/gets lists from the trade assets
+    const gives = {}, gets = {}; teams.forEach(t => { gives[t.roster_id]=[]; gets[t.roster_id]=[]; });
+    for(const a of TRADE_ASSETS.values()){
+      if(a.toRid==null) continue;
+      const item = { label:a.label, amt:(a.kind==="pick"?0:a.amt), pick:a.kind==="pick" };
+      if(gives[a.fromRid]) gives[a.fromRid].push(item);
+      if(gets[a.toRid]) gets[a.toRid].push(item);
+    }
+    const dateStr = new Date().toLocaleDateString(undefined, {month:"short", day:"numeric", year:"numeric"});
+    const assetLine = it => `${esc(it.label)} <span class="ts-amt">$${it.amt}</span>`;
+    const sumOf = arr => arr.reduce((s,x)=>s+x.amt,0);
+
+    const teamBlocks = teams.map(t => {
+      const g = gives[t.roster_id]||[], r = gets[t.roster_id]||[];
+      const o = sumOf(g), i = sumOf(r);
+      const proj = t.total - o + i, room = CAP - proj, over = SHOW_CAP && proj > CAP;
+      const list = (arr, empty) => arr.length
+        ? `<ul class="ts-list">${arr.map(it=>`<li>${assetLine(it)}</li>`).join("")}</ul><div class="ts-sub">= $${sumOf(arr)}</div>`
+        : `<div class="ts-none">${empty}</div>`;
+      const afterBits = SHOW_CAP
+        ? `$${t.total} → <b class="${over?'ts-over':''}">$${proj}</b> / ${CAP} · ${room<0?`<b class="ts-over">$${Math.abs(room)} over</b>`:`$${room} room`}`
+        : `$${t.total} → <b>$${proj}</b>`;
+      return `<div class="ts-team ${over?'over':''}">
+        <div class="ts-tname">${avatarImg(t,"ts-av")}${esc(t.owner)}</div>
+        <div class="ts-cols">
+          <div class="ts-col"><div class="ts-h gives">Gives</div>${list(g,"—")}</div>
+          <div class="ts-col"><div class="ts-h gets">Gets</div>${list(r,"—")}</div>
+        </div>
+        <div class="ts-after">${afterBits}</div>
+      </div>`;
+    }).join("");
+
+    let vLine = "";
+    if(SHOW_CAP){
+      const overTeams = teams.filter(t => (t.total - sumOf(gives[t.roster_id]||[]) + sumOf(gets[t.roster_id]||[])) > CAP);
+      vLine = overTeams.length
+        ? `<div class="ts-verdict bad">✗ ${overTeams.map(t=>esc(t.owner)).join(", ")} over $${CAP}</div>`
+        : `<div class="ts-verdict ok">✓ All teams under $${CAP}</div>`;
+    }
+
+    summaryHtml = `<div class="ts-card" id="tradeSummary">
+      <div class="ts-head"><span class="ts-title">Busch Apple Trade</span><span class="ts-date">${esc(dateStr)}</span></div>
+      <div class="ts-teams">${teamBlocks}</div>
+      ${vLine}
+      <div class="ts-foot">Salaries via the league's audited resolver · picks $0${SHOW_CAP?` · cap $${CAP}`:""}</div>
+    </div>
+    <div class="ts-actions"><button class="btn sm" id="copyTradeBtn">Copy summary</button><span class="status" id="copyMsg"></span></div>`;
+  }
+
   box.innerHTML = `<div class="result">
     <div class="rcols">${cards}</div>
     ${verdict}
     <div class="swap-note">${swapNote}</div>
+    ${summaryHtml}
   </div>`;
+
+  // wire copy-to-clipboard (plain-text version for pasting into chat)
+  const copyBtn = document.getElementById("copyTradeBtn");
+  if(copyBtn) copyBtn.addEventListener("click", () => {
+    const txt = buildTradeText(teams, out, inc);
+    (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject())
+      .then(()=>{ const m=document.getElementById("copyMsg"); if(m){ m.textContent="Copied!"; setTimeout(()=>m.textContent="",1800); } })
+      .catch(()=>{ const m=document.getElementById("copyMsg"); if(m) m.textContent="Copy failed — long-press to select."; });
+  });
+}
+
+// plain-text trade summary for the clipboard (mirrors the visual summary)
+function buildTradeText(teams){
+  const gives = {}, gets = {}; teams.forEach(t => { gives[t.roster_id]=[]; gets[t.roster_id]=[]; });
+  for(const a of TRADE_ASSETS.values()){
+    if(a.toRid==null) continue;
+    const item = { label:a.label, amt:(a.kind==="pick"?0:a.amt) };
+    if(gives[a.fromRid]) gives[a.fromRid].push(item);
+    if(gets[a.toRid]) gets[a.toRid].push(item);
+  }
+  const sumOf = arr => arr.reduce((s,x)=>s+x.amt,0);
+  const dateStr = new Date().toLocaleDateString(undefined, {month:"short", day:"numeric", year:"numeric"});
+  const lines = [`Busch Apple Trade — ${dateStr}`, ""];
+  let anyOver = false;
+  teams.forEach(t => {
+    const g = gives[t.roster_id]||[], r = gets[t.roster_id]||[];
+    const o = sumOf(g), i = sumOf(r), proj = t.total - o + i;
+    if(SHOW_CAP && proj > CAP) anyOver = true;
+    lines.push(t.owner);
+    lines.push(`  Gives: ${g.length? g.map(x=>`${x.label} $${x.amt}`).join(", ")+` (=$${o})` : "—"}`);
+    lines.push(`  Gets:  ${r.length? r.map(x=>`${x.label} $${x.amt}`).join(", ")+` (=$${i})` : "—"}`);
+    lines.push(SHOW_CAP ? `  Total: $${t.total} -> $${proj} / ${CAP} (${CAP-proj<0?`$${proj-CAP} OVER`:`$${CAP-proj} room`})`
+                        : `  Total: $${t.total} -> $${proj}`);
+    lines.push("");
+  });
+  if(SHOW_CAP) lines.push(anyOver ? `Result: OVER CAP` : `Result: all teams under $${CAP} ✓`);
+  return lines.join("\n").trim();
 }
 
 // ---- load + paint ----
