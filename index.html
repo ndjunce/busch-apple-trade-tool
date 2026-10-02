@@ -106,6 +106,31 @@
          padding:10px 0 2px;border-top:1px solid var(--line);margin-top:4px}
   .pick-sal{color:var(--mut);font-weight:700;font-size:12px}
 
+  /* ---- Salary Grid tab ---- */
+  .grid-note{font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:10px}
+  .grid-ctrls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+  .grid-ctrls select{background:var(--panel2);color:var(--txt);border:1px solid var(--line);
+                     border-radius:8px;padding:7px 9px;font-size:13px;font-weight:700}
+  .grid-count{color:var(--mut);font-size:12px;font-weight:700;margin-left:auto}
+  .grid-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:12px}
+  table.sgrid{width:100%;border-collapse:collapse;font-size:13.5px}
+  table.sgrid th{position:sticky;top:0;background:var(--panel);color:var(--mut);font-size:11px;
+                 text-transform:uppercase;letter-spacing:.04em;font-weight:800;text-align:left;
+                 padding:10px 10px;border-bottom:1px solid var(--line);cursor:pointer;white-space:nowrap;user-select:none}
+  table.sgrid th:hover{color:var(--txt)}
+  table.sgrid td{padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+  table.sgrid tr:last-child td{border-bottom:none}
+  table.sgrid th.g-sal,table.sgrid td.g-sal{text-align:right}
+  .g-pcell{display:flex;align-items:center;gap:9px;min-width:0}
+  .g-pname{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:46vw}
+  @media(min-width:720px){.g-pname{max-width:none}}
+  .gpos{font-weight:800;font-size:12px}
+  .g-nfl{color:var(--txt);font-weight:700;font-variant-numeric:tabular-nums}
+  .g-fa{color:var(--mut);font-weight:700}
+  .g-own{color:var(--mut);font-weight:700}
+  .salchip{display:inline-block;font-weight:800;font-variant-numeric:tabular-nums;
+           background:var(--panel2);border:1px solid var(--line);border-radius:7px;padding:2px 8px;color:var(--grn)}
+
   /* trade builder (multi-team) */
   .trade-teams{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:8px}
   .tt-chip{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;
@@ -192,6 +217,7 @@
 
   <div class="tabs">
     <div class="tab active" data-tab="table">Teams</div>
+    <div class="tab" data-tab="grid">Salary Grid</div>
     <div class="tab" data-tab="trade">Trade Builder</div>
   </div>
 
@@ -204,6 +230,7 @@
   <div id="errbox"></div>
 
   <div id="pane-table"><div class="loading">Loading…</div></div>
+  <div id="pane-grid" class="hide"><div class="loading">Loading…</div></div>
   <div id="pane-trade" class="hide"><div class="loading">Loading…</div></div>
 
   <div class="foot" id="foot"></div>
@@ -252,6 +279,11 @@ let ACTIVE_TAB = "table";
 const SELECTED = new Set();     // Teams tab: roster_ids or "__ALL__"
 const SORT = {};                // Teams tab per roster_id
 const FILTER = {};              // Teams tab per roster_id
+
+// Salary Grid tab: league-wide sortable/filterable table of all rostered players
+let GRID_SORT = "amt";          // amt | pos | team | owner | name
+let GRID_DIR = -1;              // 1 asc, -1 desc (salary defaults high->low)
+const GRID_FILTER = { pos:"ALL", team:"ALL", owner:"ALL" };
 
 // Trade tab (multi-team): ordered team list + per-team search/filter + selected assets w/ destination
 let TRADE_TEAMS = [];           // ordered array of roster_ids in the trade
@@ -357,21 +389,52 @@ async function buildSalaries(){
     const picks = await j(`${API}/draft/${d.draft_id}/picks`);
     for(const p of picks){ const s = `${p.round}.${String(p.draft_slot).padStart(2,"0")}`; if(p.player_id != null && ROOKIE_SCALE[s] != null) rook[String(p.player_id)] = ROOKIE_SCALE[s]; }
   }
-  const faab = {};
+  // FAAB (owner-aware fix): a waiver bid must only apply to the roster that MADE that claim, and the
+  // LATEST claim wins. Sleeper `x.adds` = { player_id: roster_id_that_added }. We record every completed
+  // FAAB add as {toRosterId, bid, ts} keyed by player, using the REAL ms timestamp (status_updated, else
+  // created) — NOT the week number, since week order isn't guaranteed chronological and a player can be
+  // claimed, dropped, and re-claimed by a different owner. The resolver then picks the most-recent bid
+  // whose toRosterId === the roster that CURRENTLY holds the player (so a prior owner's price can't leak).
+  const faabAdds = {};   // pid -> [{toRosterId, bid, ts}]
   for(let wk=1; wk<=18; wk++){
     let txns = [];
     try{ txns = await j(`${API}/league/${LEAGUE_ID}/transactions/${wk}`); }catch(e){ continue; }
     for(const x of (txns||[])){
       if(x.status !== "complete") continue;
       const bid = x.settings && x.settings.waiver_bid;
-      if(x.adds && bid != null) for(const pid of Object.keys(x.adds)) faab[pid] = Number(bid);
+      if(x.adds && bid != null){
+        const ts = Number(x.status_updated != null ? x.status_updated : (x.created != null ? x.created : 0));
+        for(const pid of Object.keys(x.adds)){
+          const toRosterId = x.adds[pid];
+          (faabAdds[pid] || (faabAdds[pid] = [])).push({ toRosterId, bid: Number(bid), ts });
+        }
+      }
     }
   }
+  // The FAAB price for (player, roster) = the bid from that roster's MOST-RECENT add of the player.
+  function faabBidFor(pid, rosterId){
+    const adds = faabAdds[String(pid)]; if(!adds || rosterId == null) return null;
+    let best = null;
+    for(const a of adds){ if(a.toRosterId === rosterId && (best === null || a.ts > best.ts)) best = a; }
+    return best ? best.bid : null;
+  }
 
-  // resolver (unchanged): auction -> FAAB bid -> rookie scale -> $1 floor
-  function sal(pid){ pid = String(pid);
+  // resolver — OWNER-AWARE. Priority: the CURRENT owner's most-recent FAAB claim (if they claimed the
+  // player off waivers) -> auction price -> rookie scale -> $1 floor.
+  // WHY FAAB IS CHECKED FIRST: a FAAB claim is a RE-ACQUISITION that resets the price to the winning bid.
+  // The reported bug (Ricky Pearsall) was Charlie auction-drafting him at $13, DROPPING him, then Chay
+  // claiming him for $2 — the old resolver checked auction FIRST, so it returned Charlie's stale $13 for
+  // Chay. Because the auction map is player-keyed (owner-blind), checking it first leaks a prior owner's
+  // price onto whoever claimed the player later. Checking the current owner's own FAAB claim first fixes
+  // that: Chay's $2 wins. Players who never FAAB-claimed (auction-drafted or TRADED in) have no bid for
+  // the current roster, so faabBidFor()=null and they correctly fall through to auction/rookie/$1 —
+  // i.e. salary still TRAVELS WITH THE PLAYER on trades, per the league rule. (Confirmed live: this also
+  // corrects Keon Coleman $1->$12 Nick, Jaylen Wright $2->$30 Henry, Marcus Mariota $1->$2 Ajay — each
+  // now shows the current owner's actual winning bid instead of a stale/overwritten one.)
+  function sal(pid, rosterId){ pid = String(pid);
+    const fb = faabBidFor(pid, rosterId);
+    if(fb != null) return fb;
     if(auc[pid] != null) return auc[pid];
-    if(faab[pid] != null) return faab[pid];
     if(rook[pid] != null) return rook[pid];
     return 1;
   }
@@ -387,7 +450,7 @@ async function buildSalaries(){
     const avatar = u.avatar ? `https://sleepercdn.com/avatars/thumbs/${u.avatar}` : null;
     const ps = (r.players||[]).map(pid => {
       const p = P(pid);
-      return { pid: String(pid), name: p?p.n:`id ${pid}`, pos: p?p.pos:"?", espnId: p?p.e:"", team: p?p.t:"", amt: sal(pid) };
+      return { pid: String(pid), name: p?p.n:`id ${pid}`, pos: p?p.pos:"?", espnId: p?p.e:"", team: p?p.t:"", amt: sal(pid, r.roster_id) };
     });
     const total = ps.reduce((s,p) => s + p.amt, 0);  // picks are $0 -> never in the total
     return { roster_id: r.roster_id, owner, sn, avatar, players: ps, picks: picksByRoster[r.roster_id] || [], total, room: CAP - total };
@@ -511,6 +574,99 @@ function paintTable(){
   const cnt = el.querySelector("#selCount");
   if(cnt) cnt.textContent = showAllMode ? "showing all 10" : SELECTED.size ? `${SELECTED.size} selected (max 4)` : "none selected";
   wireTeamControls(el);
+}
+
+/* ============================ SALARY GRID (league-wide, sortable/filterable) ============================ */
+// A flat table of EVERY rostered player across all teams, with the Part-1-corrected salary
+// (current-owner acquisition price). Sort by any column; filter by position / NFL team / fantasy owner.
+
+// flatten all teams -> one row per rostered player
+function gridRows(){
+  const rows = [];
+  TEAMS.forEach(t => (t.players||[]).forEach(p => {
+    rows.push({ name:p.name, pos:p.pos||"?", team:(p.team||"").toUpperCase(), owner:t.owner,
+                amt:p.amt, espnId:p.espnId, pid:p.pid, _rid:t.roster_id,
+                _p:{ name:p.name, pos:p.pos, team:p.team, espnId:p.espnId } });
+  }));
+  return rows;
+}
+function gridDistinct(rows, key){
+  const s = new Set(rows.map(r => r[key]).filter(v => v!=null && v!==""));
+  if(key==="pos") return POS_ORDER.filter(p=>s.has(p)).concat([...s].filter(p=>!POS_ORDER.includes(p)).sort());
+  return [...s].sort();
+}
+
+function paintGrid(){
+  const el = document.getElementById("pane-grid");
+  if(!TEAMS.length){ el.innerHTML = `<div class="loading">No players.</div>`; return; }
+  const all = gridRows();
+  const posList = gridDistinct(all, "pos");
+  const teamList = gridDistinct(all, "team");
+  const ownerList = TEAMS.map(t => t.owner);   // league order
+
+  // apply filters (compose)
+  let rows = all.filter(r =>
+    (GRID_FILTER.pos==="ALL"   || r.pos===GRID_FILTER.pos) &&
+    (GRID_FILTER.team==="ALL"  || r.team===GRID_FILTER.team) &&
+    (GRID_FILTER.owner==="ALL" || r.owner===GRID_FILTER.owner));
+
+  // sort
+  const dir = GRID_DIR;
+  const cmp = {
+    amt:   (a,b) => (a.amt-b.amt) || a.name.localeCompare(b.name),
+    pos:   (a,b) => (POS_ORDER.indexOf(a.pos)-POS_ORDER.indexOf(b.pos)) || a.name.localeCompare(b.name),
+    team:  (a,b) => a.team.localeCompare(b.team) || a.name.localeCompare(b.name),
+    owner: (a,b) => a.owner.localeCompare(b.owner) || (b.amt-a.amt),
+    name:  (a,b) => a.name.localeCompare(b.name),
+  }[GRID_SORT] || ((a,b)=>a.amt-b.amt);
+  rows.sort((a,b) => dir * cmp(a,b));
+
+  const arrow = col => GRID_SORT===col ? (GRID_DIR===1 ? " ▲" : " ▼") : "";
+  const opt = (val,sel,label) => `<option value="${esc(val)}"${sel===val?" selected":""}>${esc(label)}</option>`;
+  const posSel  = [opt("ALL",GRID_FILTER.pos,"All positions")].concat(posList.map(p=>opt(p,GRID_FILTER.pos,p))).join("");
+  const teamSel = [opt("ALL",GRID_FILTER.team,"All NFL teams")].concat(teamList.map(t=>opt(t,GRID_FILTER.team,t))).join("");
+  const ownSel  = [opt("ALL",GRID_FILTER.owner,"All fantasy teams")].concat(ownerList.map(o=>opt(o,GRID_FILTER.owner,o))).join("");
+
+  const controls = `<div class="grid-ctrls">
+    <select id="gfPos">${posSel}</select>
+    <select id="gfTeam">${teamSel}</select>
+    <select id="gfOwner">${ownSel}</select>
+    <button class="btn sm" id="gfReset">Reset</button>
+    <span class="grid-count">${rows.length} player${rows.length===1?"":"s"}</span>
+  </div>`;
+
+  const head = `<thead><tr>
+    <th class="g-ply" data-sort="name">Player${arrow("name")}</th>
+    <th data-sort="pos">Pos${arrow("pos")}</th>
+    <th data-sort="team">NFL${arrow("team")}</th>
+    <th data-sort="owner">Fantasy Team${arrow("owner")}</th>
+    <th class="g-sal" data-sort="amt">Salary${arrow("amt")}</th>
+  </tr></thead>`;
+
+  const body = `<tbody>` + rows.map(r => `<tr>
+    <td class="g-ply"><span class="g-pcell">${playerImg(r._p)}<span class="g-pname">${esc(r.name)}</span></span></td>
+    <td><span class="gpos pos-${esc(r.pos)}">${esc(r.pos)}</span></td>
+    <td class="g-nfl">${r.team ? esc(r.team) : '<span class="g-fa">FA</span>'}</td>
+    <td class="g-own">${esc(r.owner)}</td>
+    <td class="g-sal"><span class="salchip">$${r.amt}</span></td>
+  </tr>`).join("") + `</tbody>`;
+
+  el.innerHTML = `<div class="grid-note">Every rostered player, league-wide. Salary = <b>current-owner acquisition price</b> (auction, or the current owner's winning FAAB bid). Tap a column header to sort; tap again to reverse.</div>`
+    + controls
+    + `<div class="grid-wrap"><table class="sgrid">${head}${body}</table></div>`;
+
+  // wire header sort
+  el.querySelectorAll("th[data-sort]").forEach(th => th.addEventListener("click", () => {
+    const col = th.dataset.sort;
+    if(GRID_SORT===col){ GRID_DIR = -GRID_DIR; }
+    else { GRID_SORT = col; GRID_DIR = (col==="amt") ? -1 : 1; }   // salary defaults high->low, text asc
+    paintGrid();
+  }));
+  // wire filters
+  const bind = (id,key) => { const s = el.querySelector(id); if(s) s.addEventListener("change", () => { GRID_FILTER[key] = s.value; paintGrid(); }); };
+  bind("#gfPos","pos"); bind("#gfTeam","team"); bind("#gfOwner","owner");
+  const reset = el.querySelector("#gfReset");
+  if(reset) reset.addEventListener("click", () => { GRID_FILTER.pos="ALL"; GRID_FILTER.team="ALL"; GRID_FILTER.owner="ALL"; GRID_SORT="amt"; GRID_DIR=-1; paintGrid(); });
 }
 
 /* ============================ TRADE BUILDER (multi-team) ============================ */
@@ -824,7 +980,7 @@ async function load(){
     for(const [k,a] of [...TRADE_ASSETS]) if(!teamByRid(a.fromRid)) TRADE_ASSETS.delete(k);
     reconcileDestinations();
     document.getElementById("sub").textContent = `${TEAMS.length} teams · season ${SEASON}`;
-    paintTable(); paintTrade();
+    paintTable(); paintGrid(); paintTrade();
     status.textContent = `Updated ${new Date().toLocaleTimeString()}`;
     document.getElementById("foot").innerHTML = SHOW_CAP
       ? `Live from the public Sleeper API on each load. Cap $${CAP}. Picks are $0 and never count toward the cap. No fair/unfair judgment — just the numbers.`
@@ -840,6 +996,7 @@ document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () =>
   ACTIVE_TAB = t.dataset.tab;
   document.querySelectorAll(".tab").forEach(x => x.classList.toggle("active", x===t));
   document.getElementById("pane-table").classList.toggle("hide", ACTIVE_TAB!=="table");
+  document.getElementById("pane-grid").classList.toggle("hide", ACTIVE_TAB!=="grid");
   document.getElementById("pane-trade").classList.toggle("hide", ACTIVE_TAB!=="trade");
 }));
 document.getElementById("refreshBtn").addEventListener("click", load);
