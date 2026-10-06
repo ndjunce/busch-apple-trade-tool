@@ -139,22 +139,31 @@
 
   /* ---- Card grid view (dense, position-colored, left->right wrap-down) ---- */
   .card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
-  .ptile{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--line);
+  /* base tile: full-background position TINT set per .pos-b-* below (fallback = neutral panel) */
+  .ptile{background:var(--panel);border:1px solid var(--line);
          border-radius:10px;padding:7px 8px;line-height:1.15;min-width:0;overflow:hidden;
          display:flex;flex-direction:column;align-items:center;text-align:center}
   .ptile .pt-face{margin-bottom:3px}
   .ptile .pimg,.ptile .pimg-fb,.ptile .pimg-wrap{width:40px;height:40px;flex:0 0 40px}
   .ptile .pimg-fb{font-size:16px}
-  .pt-name{font-weight:800;font-size:13px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  /* text stays high-contrast (near-white / light-muted) on top of the ~15% tint over the dark base */
+  .pt-name{font-weight:800;font-size:13px;color:var(--txt);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .pt-meta{display:flex;gap:5px;align-items:center;justify-content:center;margin-top:1px}
   .pt-pos{font-weight:800;font-size:11px}
-  .pt-team{color:var(--mut);font-size:11px;font-weight:700}
-  .pt-own{color:var(--mut);font-size:10.5px;font-weight:700;margin-top:1px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .pt-sal{margin-top:3px;font-weight:800;font-size:15px;font-variant-numeric:tabular-nums;color:var(--grn)}
-  /* position-colored left accent on tiles (mirrors the .pos-* text colors) */
-  .pos-b-QB{border-left-color:#f0913e}.pos-b-RB{border-left-color:#33e08a}.pos-b-WR{border-left-color:#4aa8ff}
-  .pos-b-TE{border-left-color:#b878ff}.pos-b-K{border-left-color:#95a5a6}.pos-b-DEF{border-left-color:#ff6060}
-  .pos-b-DL{border-left-color:#e0679a}.pos-b-LB{border-left-color:#67c7e0}.pos-b-DB{border-left-color:#c7e067}
+  .pt-team{color:#cdd6e2;font-size:11px;font-weight:700}
+  .pt-own{color:#cdd6e2;font-size:10.5px;font-weight:700;margin-top:1px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pt-sal{margin-top:3px;font-weight:800;font-size:15px;font-variant-numeric:tabular-nums;color:#fff}
+  /* full-background position TINT (~15% of the .pos-* color) + a stronger same-color border (~55%),
+     so each position reads as its own color block while text stays legible (tint, not full saturation) */
+  .pos-b-QB{background:rgba(240,145,62,.15);border-color:rgba(240,145,62,.55)}
+  .pos-b-RB{background:rgba(51,224,138,.15);border-color:rgba(51,224,138,.55)}
+  .pos-b-WR{background:rgba(74,168,255,.15);border-color:rgba(74,168,255,.55)}
+  .pos-b-TE{background:rgba(184,120,255,.15);border-color:rgba(184,120,255,.55)}
+  .pos-b-K{background:rgba(149,165,166,.16);border-color:rgba(149,165,166,.6)}
+  .pos-b-DEF{background:rgba(255,96,96,.15);border-color:rgba(255,96,96,.55)}
+  .pos-b-DL{background:rgba(224,103,154,.15);border-color:rgba(224,103,154,.55)}
+  .pos-b-LB{background:rgba(103,199,224,.15);border-color:rgba(103,199,224,.55)}
+  .pos-b-DB{background:rgba(199,224,103,.15);border-color:rgba(199,224,103,.55)}
   @media(max-width:480px){ .card-grid{grid-template-columns:repeat(2,1fr)} }
 
   /* trade builder (multi-team) */
@@ -309,7 +318,7 @@ const FILTER = {};              // Teams tab per roster_id
 // Salary Grid tab: league-wide sortable/filterable list of all rostered players
 let GRID_SORT = "amt";          // amt | pos | team | owner | name
 let GRID_DIR = -1;              // 1 asc, -1 desc (salary defaults high->low)
-let GRID_VIEW = "table";        // "table" | "cards" (same data; branch only the render)
+let GRID_VIEW = "cards";        // "table" | "cards" (same data; branch only the render) — default = Cards
 const GRID_FILTER = { pos:"ALL", team:"ALL", owner:"ALL" };
 
 // Trade tab (multi-team): ordered team list + per-team search/filter + selected assets w/ destination
