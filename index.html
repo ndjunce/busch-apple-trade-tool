@@ -174,6 +174,12 @@
     .pt-meta{gap:3px}
   }
 
+  /* owner-color legend (cards view): compact owner -> color swatch map, wraps on mobile */
+  .owner-legend{display:flex;flex-wrap:wrap;gap:6px 12px;margin:2px 0 12px;padding:8px 10px;
+                border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+  .ol-item{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;color:var(--txt)}
+  .ol-sw{width:12px;height:12px;border-radius:3px;flex:0 0 12px;box-shadow:0 0 0 1px rgba(0,0,0,.25)}
+
   /* ---- cap-compliance quick view (Teams tab strip) ---- */
   .cc-wrap{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:10px 12px;margin-bottom:14px}
   .cc-head{font-weight:800;font-size:13.5px;margin-bottom:9px;display:flex;align-items:center;gap:7px;line-height:1.3}
@@ -342,6 +348,14 @@ const OWNER = {
   rearmostzeus:"Zach", Nyquilbandit:"Henry", Sdljunce:"Seth", ChayDyck:"Chay", RileyHeid13:"Riley",
   JunceBoxes:"Nick", charliehorejsi:"Charlie", TheZynBandit:"Bobby", DaBigDyck:"Ajay", BigBomboclaat69:"Jonah"
 };
+// Stable, visually distinct frame color per fantasy manager (keyed by display name). Chosen to be clear,
+// saturated BORDER colors that read against the muted position-tint tile backgrounds and don't duplicate the
+// position fills (QB orange / RB green / WR blue / TE purple / K grey / DEF red). Used only as the card frame.
+const OWNER_COLORS = {
+  Zach:"#ff3b6b", Henry:"#ffd23f", Seth:"#00d1b2", Chay:"#8b5cf6", Riley:"#ff8c3b",
+  Nick:"#17b2ff", Charlie:"#e879f9", Bobby:"#7cff5c", Ajay:"#ff5ce1", Jonah:"#5c7cff"
+};
+function ownerColor(name){ return OWNER_COLORS[name] || "#9aa6b4"; }
 const POS_ORDER = ["QB","RB","WR","TE","K","DEF","DL","LB","DB"];
 
 // ---- state ----
@@ -830,13 +844,16 @@ function paintGrid(){
   let view;
   if(GRID_VIEW === "cards"){
     // dense, position-colored tiles; auto-fill grid flows left->right then wraps down (reading order)
-    view = `<div class="card-grid">` + rows.map(r => `<div class="ptile pos-b-${esc(r.pos)}">
+    // owner-colored FRAME: border-color + a 2px inset ring in the manager's color (inset = no layout
+    // shift / no 3-across overflow). The position tint stays the background fill.
+    view = `<div class="card-grid">` + rows.map(r => { const oc = ownerColor(r.owner);
+      return `<div class="ptile pos-b-${esc(r.pos)}" style="border-color:${oc};box-shadow:inset 0 0 0 2px ${oc}">
       <div class="pt-face">${playerImg(r._p)}</div>
       <div class="pt-name">${esc(r.name)}</div>
       <div class="pt-meta"><span class="pt-pos pos-${esc(r.pos)}">${esc(r.pos)}</span><span class="pt-team">${r.team?esc(r.team):"FA"}</span></div>
       <div class="pt-own">${esc(r.owner)}</div>
       <div class="pt-sal">$${r.amt}</div>
-    </div>`).join("") + `</div>`;
+    </div>`; }).join("") + `</div>`;
   } else {
     const head = `<thead><tr>
       <th class="g-ply" data-sort="name">Player${arrow("name")}</th>
@@ -858,8 +875,16 @@ function paintGrid(){
   const sortNote = GRID_VIEW==="cards"
     ? ` Use the controls to sort/filter.`
     : ` Tap a column header to sort; tap again to reverse.`;
-  el.innerHTML = `<div class="grid-note">Every rostered player, league-wide. Salary = <b>current-owner acquisition price</b> (auction, or the current owner's winning FAAB bid).${sortNote}</div>`
-    + controls + view;
+  // owner-color legend (cards view only) so the tile frames are decodable; league order, compact
+  const ownerLegend = GRID_VIEW==="cards"
+    ? `<div class="owner-legend">` + TEAMS.map(t => {
+        const oc = ownerColor(t.owner);
+        return `<span class="ol-item"><span class="ol-sw" style="background:${oc}"></span>${esc(t.owner)}</span>`;
+      }).join("") + `</div>`
+    : "";
+  const frameNote = GRID_VIEW==="cards" ? ` Tile border = the fantasy manager who rosters that player (see legend).` : "";
+  el.innerHTML = `<div class="grid-note">Every rostered player, league-wide. Salary = <b>current-owner acquisition price</b> (auction, or the current owner's winning FAAB bid).${sortNote}${frameNote}</div>`
+    + controls + ownerLegend + view;
 
   // wire the Table/Cards toggle
   el.querySelectorAll(".vbtn").forEach(b => b.addEventListener("click", () => {
