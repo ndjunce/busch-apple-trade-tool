@@ -151,7 +151,7 @@
   .pt-meta{display:flex;gap:5px;align-items:center;justify-content:center;margin-top:1px}
   .pt-pos{font-weight:800;font-size:11px}
   .pt-team{color:#cdd6e2;font-size:11px;font-weight:700}
-  .pt-own{color:#cdd6e2;font-size:10.5px;font-weight:700;margin-top:1px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pt-own{color:#cdd6e2;font-size:10.5px;font-weight:800;margin-top:1px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .pt-sal{margin-top:3px;font-weight:800;font-size:15px;font-variant-numeric:tabular-nums;color:#fff}
   /* full-background position TINT (~15% of the .pos-* color) + a stronger same-color border (~55%),
      so each position reads as its own color block while text stays legible (tint, not full saturation) */
@@ -851,7 +851,7 @@ function paintGrid(){
       <div class="pt-face">${playerImg(r._p)}</div>
       <div class="pt-name">${esc(r.name)}</div>
       <div class="pt-meta"><span class="pt-pos pos-${esc(r.pos)}">${esc(r.pos)}</span><span class="pt-team">${r.team?esc(r.team):"FA"}</span></div>
-      <div class="pt-own">${esc(r.owner)}</div>
+      <div class="pt-own" style="color:${oc}">${esc(r.owner)}</div>
       <div class="pt-sal">$${r.amt}</div>
     </div>`; }).join("") + `</div>`;
   } else {
