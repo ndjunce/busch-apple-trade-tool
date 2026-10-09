@@ -527,23 +527,18 @@ async function buildSalaries(){
     for(const x of (txns||[])){
       if(x.status !== "complete") continue;
       const bid = x.settings && x.settings.waiver_bid;
-      if(x.adds && bid != null){
+      if(x.adds){
+        // T3-3 (2026-10-09): record EVERY add (waiver, free_agent, trade) with its type, not just FAAB claims,
+        // so the resolver can apply the league rule: a dropped player has no salary; the next team pays its
+        // winning FAAB bid, or $1 for a normal free-agent pickup. Trades carry the salary unchanged.
         const ts = Number(x.status_updated != null ? x.status_updated : (x.created != null ? x.created : 0));
         for(const pid of Object.keys(x.adds)){
           const toRosterId = x.adds[pid];
-          (faabAdds[pid] || (faabAdds[pid] = [])).push({ toRosterId, bid: Number(bid), ts });
+          (faabAdds[pid] || (faabAdds[pid] = [])).push({ toRosterId, type: x.type, bid: bid != null ? Number(bid) : null, ts });
         }
       }
     }
   }
-  // The FAAB price for (player, roster) = the bid from that roster's MOST-RECENT add of the player.
-  function faabBidFor(pid, rosterId){
-    const adds = faabAdds[String(pid)]; if(!adds || rosterId == null) return null;
-    let best = null;
-    for(const a of adds){ if(a.toRosterId === rosterId && (best === null || a.ts > best.ts)) best = a; }
-    return best ? best.bid : null;
-  }
-
   // resolver — OWNER-AWARE. Priority: the CURRENT owner's most-recent FAAB claim (if they claimed the
   // player off waivers) -> auction price -> rookie scale -> $1 floor.
   // WHY FAAB IS CHECKED FIRST: a FAAB claim is a RE-ACQUISITION that resets the price to the winning bid.
@@ -556,12 +551,20 @@ async function buildSalaries(){
   // i.e. salary still TRAVELS WITH THE PLAYER on trades, per the league rule. (Confirmed live: this also
   // corrects Keon Coleman $1->$12 Nick, Jaylen Wright $2->$30 Henry, Marcus Mariota $1->$2 Ajay — each
   // now shows the current owner's actual winning bid instead of a stale/overwritten one.)
+  // T3-3 RULE (owner, 2026-10-09): a dropped player has NO salary. Whoever picks him up next pays their winning
+  // FAAB bid (waiver claim) or $1 (a normal free-agent pickup). A trade carries the salary unchanged.
+  // So we replay the player's add events oldest -> newest starting from the auction/rookie price:
+  // waiver(bid) -> price = bid; free_agent -> price = $1; trade -> unchanged. This supersedes the older
+  // 'current owner's FAAB claim first' logic (which let a stale auction price survive a drop + free-agent re-add:
+  // Keenan Allen $7, Tyreek Hill $5, ... now correctly $1).
   function sal(pid, rosterId){ pid = String(pid);
-    const fb = faabBidFor(pid, rosterId);
-    if(fb != null) return fb;
-    if(auc[pid] != null) return auc[pid];
-    if(rook[pid] != null) return rook[pid];
-    return 1;
+    let price = auc[pid] != null ? auc[pid] : (rook[pid] != null ? rook[pid] : 1);
+    const evs = (faabAdds[pid] || []).slice().sort((a, b) => a.ts - b.ts);
+    for(const e of evs){
+      if(e.type === "waiver" && e.bid != null) price = e.bid;
+      else if(e.type === "free_agent") price = 1;
+    }
+    return price;
   }
   const P = pid => PLAYERS[pid] || null;
 
