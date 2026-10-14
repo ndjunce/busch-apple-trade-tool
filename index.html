@@ -2,317 +2,202 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<script>(function(){try{var t=localStorage.getItem("bs-theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+<meta name="theme-color" content="#0E1116" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#F5F6F8" media="(prefers-color-scheme: light)">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
 <title>Busch Apple — Salary & Trade Tool</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<link rel="stylesheet" href="assets/family.css?v=1.0.3">
 <style>
-  :root{
-    --ink:#0a0e14; --panel:#111823; --panel2:#0d131c; --line:#1e2836;
-    --txt:#e6ebf2; --mut:#8b97a7; --accent:#4aa8ff; --grn:#33e08a; --red:#ff6060; --gold:#ffcf3f;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--ink);color:var(--txt);
-       font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-       -webkit-font-smoothing:antialiased;line-height:1.4}
-  .wrap{max-width:1120px;margin:0 auto;padding:0 14px 60px}
-  header{padding:20px 0 8px}
-  h1{font-size:21px;font-weight:800;margin:0}
-  .sub{color:var(--mut);font-size:13px;margin-top:4px}
-  .capnote{color:var(--mut);font-size:12px;margin-top:6px}
-  .capnote b{color:var(--txt)}
+  :root{--accent:#D0503C;--accent-text-dark:#E8705E;--accent-text-light:#A93A28}
 
-  .tabs{display:flex;gap:8px;margin:16px 0 16px;flex-wrap:wrap}
-  .tab{padding:8px 14px;border:1px solid var(--line);border-radius:9px;background:var(--panel);
-       color:var(--mut);font-weight:700;font-size:13px;cursor:pointer;user-select:none}
-  .tab.active{color:var(--txt);border-color:var(--accent);background:rgba(74,168,255,.08)}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 var(--sp-4) var(--sp-6)}
 
-  .bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
-  .btn{padding:7px 13px;border:1px solid var(--line);border-radius:8px;background:var(--panel);
-       color:var(--txt);font-weight:700;font-size:12.5px;cursor:pointer}
-  .btn:hover{border-color:var(--mut)}
-  .btn.primary{background:var(--accent);color:var(--ink);border-color:var(--accent)}
-  .btn.sm{padding:5px 10px;font-size:12px}
-  .status{color:var(--mut);font-size:12px}
+  /* ---- app bar: wordmark + context left, freshness + actions right; wraps to 2 rows under 480px ---- */
+  .bs-appbar{flex-wrap:wrap;row-gap:var(--sp-2);padding:var(--sp-2) var(--sp-4)}
+  h1.bs-wordmark{margin:0}
+  .ab-id{display:flex;align-items:baseline;gap:var(--sp-3);flex-wrap:wrap;min-width:0}
+  .ab-tools{display:flex;align-items:center;gap:var(--sp-2);margin-left:auto;flex-wrap:wrap}
+  .bs-appbar .ab-tools .bs-fresh{margin-left:0;margin-right:var(--sp-1)}
+  .ab-auto{display:inline-flex;align-items:center;gap:var(--sp-1);min-height:36px;font-size:var(--fs-meta);color:var(--text-2);cursor:pointer}
+  .ab-auto input{accent-color:var(--accent);margin:0}
+  @media(max-width:479px){ .ab-tools{width:100%;margin-left:0} }
 
-  .loading{color:var(--mut);padding:40px 0;text-align:center}
-  .err{color:var(--red);border:1px solid var(--red);border-radius:9px;padding:12px;margin:10px 0;font-size:13px}
+  .tabs-row{margin:var(--sp-3) 0 var(--sp-4)}
+  .loading{color:var(--text-2);padding:var(--sp-6) 0;text-align:center}
+  .err{color:var(--down);border:1px solid var(--down);border-radius:var(--r-panel);padding:var(--sp-3);margin:var(--sp-3) 0;font-size:13px}
+  .empty{color:var(--text-2);font-size:13px;margin:0;padding:var(--sp-3)}
+  .hide{display:none}
 
-  /* explainer note */
-  .explain{border:1px solid var(--line);border-radius:11px;background:var(--panel);
-           padding:12px 14px;margin-bottom:14px;font-size:12.5px;color:var(--mut);line-height:1.55}
-  .explain b{color:var(--txt)}
+  /* ---- player image chain: headshot -> team logo -> initial ---- */
+  .pimg-wrap{width:28px;height:28px;flex:0 0 28px;display:inline-flex;align-items:center;justify-content:center}
+  .pimg{width:28px;height:28px;border-radius:50%;object-fit:cover;object-position:top center;background:var(--surface-2);display:block}
+  .pimg.is-logo{object-fit:contain;background:#fff;padding:3px;outline:1px solid var(--border);outline-offset:-1px}
+  .pimg-fb{width:28px;height:28px;border-radius:50%;align-items:center;justify-content:center;
+           font-size:13px;font-weight:600;background:var(--surface-2);border:1px solid var(--border)}
+  .pick-ic{width:28px;height:28px;flex:0 0 28px;border-radius:var(--r-chip);display:inline-flex;align-items:center;justify-content:center;
+           font:600 var(--fs-micro)/1 var(--font-display);letter-spacing:.06em;background:var(--surface-2);border:1px solid var(--border);color:var(--text-2)}
+  .oav{width:24px;height:24px;flex:0 0 24px;border-radius:50%;object-fit:cover;background:var(--surface-2);display:inline-block}
+  .cell-flex{display:flex;align-items:center;gap:var(--sp-2);min-width:0}
+  .nm-cell{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+  .ppos{color:var(--text-2);font-size:12px;font-weight:600;margin-left:var(--sp-1)}
+  .pteam{color:var(--text-2);font-size:12px;margin-left:var(--sp-1);text-transform:uppercase}
 
-  /* player image chain: headshot -> team logo -> initial */
-  .pimg-wrap{width:30px;height:30px;flex:0 0 30px;display:inline-flex;align-items:center;justify-content:center}
-  .pimg{width:30px;height:30px;border-radius:50%;object-fit:cover;object-position:top center;background:var(--panel2);display:block}
-  .pimg.is-logo{object-fit:contain;background:#fff;padding:3px;box-shadow:0 0 0 1px rgba(0,0,0,.15)}
-  .pimg-fb{width:30px;height:30px;border-radius:50%;align-items:center;justify-content:center;
-           font-size:13px;font-weight:800;background:var(--panel2);border:1px solid var(--line)}
-  .pos-QB{color:#f0913e}.pos-RB{color:#33e08a}.pos-WR{color:#4aa8ff}.pos-TE{color:#b878ff}
-  .pos-K{color:#95a5a6}.pos-DEF{color:#ff6060}.pos-DL{color:#e0679a}.pos-LB{color:#67c7e0}.pos-DB{color:#c7e067}
-  .pick-ic{width:30px;height:30px;flex:0 0 30px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;
-           font-size:13px;font-weight:800;background:var(--panel2);border:1px solid var(--line);color:var(--gold)}
-
-  /* splash / team picker */
-  .splash-h{font-size:15px;font-weight:800;margin:6px 0 10px}
-  .picker{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:14px}
-  .pcard{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);
-         border-radius:11px;background:var(--panel);cursor:pointer;user-select:none;transition:border-color .12s}
-  .pcard:hover{border-color:var(--mut)}
-  .pcard.sel{border-color:var(--accent);background:rgba(74,168,255,.10)}
-  .pcard .oav{width:34px;height:34px;flex:0 0 34px;border-radius:50%;object-fit:cover;background:var(--panel2)}
-  .pcard .ometa{min-width:0}
-  .pcard .oname{font-weight:800;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .pcard .osub{color:var(--mut);font-size:11.5px;font-variant-numeric:tabular-nums}
-  .picker-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
-  .sel-count{color:var(--mut);font-size:12px}
-
-  /* team columns */
-  .cols{display:grid;gap:12px}
+  /* ---- Teams tab: cap table + roster panels ---- */
+  .cc-head{margin:0 0 var(--sp-2);font-size:15px;font-weight:600}
+  .cap-table td.view-cell,.cap-table th.view-cell{width:48px}
+  .cap-table input[type=checkbox],.pick>input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent);margin:0;cursor:pointer}
+  .cap-actions{display:flex;align-items:center;gap:var(--sp-2);flex-wrap:wrap;margin:var(--sp-3) 0 var(--sp-4)}
+  .sel-count{color:var(--text-2);font-size:var(--fs-meta)}
+  .cols{display:grid;gap:var(--sp-3)}
   .cols.n1{grid-template-columns:1fr}
   .cols.n2{grid-template-columns:repeat(2,1fr)}
   .cols.n3{grid-template-columns:repeat(3,1fr)}
   .cols.n4{grid-template-columns:repeat(4,1fr)}
   @media(max-width:900px){.cols.n3,.cols.n4{grid-template-columns:repeat(2,1fr)}}
   @media(max-width:620px){.cols.n2,.cols.n3,.cols.n4{grid-template-columns:1fr}}
-
-  .team{border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden}
-  .team-head{display:flex;align-items:center;gap:10px;padding:12px 14px}
-  .team-head .oav{width:32px;height:32px;flex:0 0 32px;border-radius:50%;object-fit:cover;background:var(--panel2)}
-  .team-name{font-weight:800;font-size:15px;min-width:0}
-  .team-name .sn{color:var(--mut);font-weight:600;font-size:12px;display:block}
-  .team-fin{margin-left:auto;text-align:right;font-variant-numeric:tabular-nums;flex:0 0 auto}
-  .team-total{font-weight:800;font-size:15px}
-  .team-total .cap{color:var(--mut);font-weight:600;font-size:12px}
-  .team-room{font-size:12px;font-weight:700}
-  .room-ok{color:var(--grn)} .room-over{color:var(--red)}
-  .capbar{height:6px;background:var(--panel2);border-radius:4px;overflow:hidden;margin:0 14px}
+  .team{min-width:0;margin:0;overflow:hidden}
+  .team-head{flex-wrap:wrap;row-gap:var(--sp-2);padding:var(--sp-2) var(--sp-3)}
+  .team-id{display:flex;align-items:center;gap:var(--sp-2);min-width:0}
+  .sn{display:block;font-size:var(--fs-meta);color:var(--text-2)}
+  .team-fin{margin-left:auto;text-align:right;font-size:13px;line-height:1.3}
+  .team-total{display:block;font:600 var(--fs-card)/1.1 var(--font-display);font-variant-numeric:tabular-nums}
+  .team-ctrls{display:flex;gap:var(--sp-2);width:100%}
+  .team-ctrls .bs-select{flex:1 1 0;min-width:0}
+  .capbar{height:4px;background:var(--surface-2)}
   .capbar .fill{height:100%;background:var(--accent)}
-  .capbar .fill.over{background:var(--red)}
+  .capbar .fill.over{background:var(--down)}
+  .roster-table td.pl{max-width:0;width:100%}
 
-  .ctrls{display:flex;gap:8px;flex-wrap:wrap;padding:10px 14px 4px}
-  .ctrls select{background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:7px;
-                padding:5px 8px;font-size:12px;font-weight:700;cursor:pointer;max-width:140px}
-  .ctrls select:focus{outline:none;border-color:var(--accent)}
-
-  .roster{padding:6px 14px 12px}
-  .prow{display:grid;grid-template-columns:30px 1fr auto;gap:10px;align-items:center;
-        padding:5px 0;border-top:1px solid var(--line);font-size:13px}
-  .prow:first-child{border-top:none}
-  .pname{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
-  .ppos{color:var(--mut);font-size:11px;font-weight:700;margin-left:6px}
-  .pteam{color:var(--mut);font-size:10.5px;font-weight:700;margin-left:5px;text-transform:uppercase;letter-spacing:.03em;opacity:.85}
-  .psal{font-weight:800;font-variant-numeric:tabular-nums;min-width:40px;text-align:right}
-  .subhd{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--mut);
-         padding:10px 0 2px;border-top:1px solid var(--line);margin-top:4px}
-  .pick-sal{color:var(--mut);font-weight:700;font-size:12px}
-
-  /* ---- Salary Grid tab ---- */
-  .grid-note{font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:10px}
-  .grid-ctrls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
-  .grid-ctrls select{background:var(--panel2);color:var(--txt);border:1px solid var(--line);
-                     border-radius:8px;padding:7px 9px;font-size:13px;font-weight:700}
-  .grid-count{color:var(--mut);font-size:12px;font-weight:700;margin-left:auto}
-  .grid-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:12px}
-  table.sgrid{width:100%;border-collapse:collapse;font-size:13.5px}
-  table.sgrid th{position:sticky;top:0;background:var(--panel);color:var(--mut);font-size:11px;
-                 text-transform:uppercase;letter-spacing:.04em;font-weight:800;text-align:left;
-                 padding:10px 10px;border-bottom:1px solid var(--line);cursor:pointer;white-space:nowrap;user-select:none}
-  table.sgrid th:hover{color:var(--txt)}
-  table.sgrid td{padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
-  table.sgrid tr:last-child td{border-bottom:none}
-  table.sgrid th.g-sal,table.sgrid td.g-sal{text-align:right}
-  .g-pcell{display:flex;align-items:center;gap:9px;min-width:0}
-  .g-pname{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:46vw}
+  /* ---- Salary Grid ---- */
+  .grid-ctrls{display:flex;flex-wrap:wrap;gap:var(--sp-2);align-items:center;margin-bottom:var(--sp-3)}
+  .seg-lab{font-size:var(--fs-meta);color:var(--text-2)}
+  .grid-count{color:var(--text-2);font-size:var(--fs-meta);margin-left:auto}
+  .g-pname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:26vw}
+  .seg-wrap{display:inline-flex;align-items:center;gap:var(--sp-1)}
   @media(min-width:720px){.g-pname{max-width:none}}
-  .gpos{font-weight:800;font-size:12px}
-  .g-nfl{color:var(--txt);font-weight:700;font-variant-numeric:tabular-nums}
-  .g-fa{color:var(--mut);font-weight:700}
-  .g-own{color:var(--mut);font-weight:700}
-  .salchip{display:inline-block;font-weight:800;font-variant-numeric:tabular-nums;
-           background:var(--panel2);border:1px solid var(--line);border-radius:7px;padding:2px 8px;color:var(--grn)}
+  .gpos{font-weight:600}
 
-  /* view toggle (Table / Cards) */
-  .grid-view{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
-  .vbtn{background:var(--panel2);color:var(--mut);border:none;padding:7px 12px;font-size:13px;font-weight:800;cursor:pointer}
-  .vbtn.on{background:var(--accent);color:#06121d}
-  #gfDir{min-width:34px}
-
-  /* ---- Card grid view (dense, position-colored, left->right wrap-down) ---- */
-  .card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:6px}
-  /* base tile: full-background position TINT set per .pos-b-* below (fallback = neutral panel) */
-  .ptile{background:var(--panel);border:1px solid var(--line);
-         border-radius:10px;padding:7px 8px;line-height:1.15;min-width:0;overflow:hidden;
-         display:flex;flex-direction:column;align-items:center;text-align:center}
-  .ptile .pt-face{margin-bottom:3px}
+  /* cards: neutral tile; position/owner shown as a 3px left bar (data-posbar), never a full-tile fill */
+  .card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:var(--sp-2)}
+  .ptile{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-chip);padding:var(--sp-2);
+         line-height:1.2;min-width:0;overflow:hidden;display:flex;flex-direction:column;align-items:center;text-align:center}
+  .ptile .pt-face{margin-bottom:var(--sp-1)}
   .ptile .pimg,.ptile .pimg-fb,.ptile .pimg-wrap{width:40px;height:40px;flex:0 0 40px}
   .ptile .pimg-fb{font-size:16px}
-  /* text stays high-contrast (near-white / light-muted) on top of the ~15% tint over the dark base */
-  .pt-name{font-weight:800;font-size:13px;color:var(--txt);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .pt-meta{display:flex;gap:5px;align-items:center;justify-content:center;margin-top:1px}
-  .pt-pos{font-weight:800;font-size:11px}
-  .pt-team{color:#cdd6e2;font-size:11px;font-weight:700}
-  .pt-own{color:#cdd6e2;font-size:10.5px;font-weight:800;margin-top:1px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .pt-sal{margin-top:3px;font-weight:800;font-size:15px;font-variant-numeric:tabular-nums;color:#fff}
-  /* full-background position TINT (~15% of the .pos-* color) + a stronger same-color border (~55%),
-     so each position reads as its own color block while text stays legible (tint, not full saturation) */
-  .pos-b-QB{background:rgba(240,145,62,.15);border-color:rgba(240,145,62,.55)}
-  .pos-b-RB{background:rgba(51,224,138,.15);border-color:rgba(51,224,138,.55)}
-  .pos-b-WR{background:rgba(74,168,255,.15);border-color:rgba(74,168,255,.55)}
-  .pos-b-TE{background:rgba(184,120,255,.15);border-color:rgba(184,120,255,.55)}
-  .pos-b-K{background:rgba(149,165,166,.16);border-color:rgba(149,165,166,.6)}
-  .pos-b-DEF{background:rgba(255,96,96,.15);border-color:rgba(255,96,96,.55)}
-  .pos-b-DL{background:rgba(224,103,154,.15);border-color:rgba(224,103,154,.55)}
-  .pos-b-LB{background:rgba(103,199,224,.15);border-color:rgba(103,199,224,.55)}
-  .pos-b-DB{background:rgba(199,224,103,.15);border-color:rgba(199,224,103,.55)}
-  /* mobile: fit ~3 tiles across a 390px phone (tighter padding/fonts, smaller face) */
+  .pt-name{font-weight:600;font-size:13px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pt-meta{display:flex;gap:var(--sp-1);align-items:center;justify-content:center}
+  .pt-pos{font-weight:600;font-size:11px}
+  .pt-team{color:var(--text-2);font-size:11px}
+  .pt-own{color:var(--text-2);font-size:11px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pt-sal{margin-top:var(--sp-1);font:600 var(--fs-card)/1 var(--font-display);font-variant-numeric:tabular-nums}
   @media(max-width:480px){
-    .card-grid{grid-template-columns:repeat(3,1fr);gap:5px}
-    .ptile{padding:5px 4px;border-radius:8px}
+    .card-grid{grid-template-columns:repeat(3,1fr);gap:var(--sp-1)}
+    .ptile{padding:var(--sp-1)}
     .ptile .pimg,.ptile .pimg-fb,.ptile .pimg-wrap{width:32px;height:32px;flex:0 0 32px}
-    .pt-name{font-size:11px}.pt-pos{font-size:10px}.pt-team{font-size:9.5px}
-    .pt-own{font-size:9px}.pt-sal{font-size:13px;margin-top:2px}
-    .pt-meta{gap:3px}
+    .pt-name{font-size:11px}.pt-pos{font-size:11px}.pt-team{font-size:11px}
+    .pt-own{font-size:11px}.pt-sal{font-size:15px}
   }
 
-  /* owner-color legend (cards view): compact owner -> color swatch map, wraps on mobile */
-  .owner-legend{display:flex;flex-wrap:wrap;gap:6px 12px;margin:2px 0 12px;padding:8px 10px;
-                border:1px solid var(--line);border-radius:10px;background:var(--panel)}
-  .ol-item{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;color:var(--txt)}
-  .ol-sw{width:12px;height:12px;border-radius:3px;flex:0 0 12px;box-shadow:0 0 0 1px rgba(0,0,0,.25)}
+  /* owner-color legend (Color: Owner) */
+  .owner-legend{display:flex;flex-wrap:wrap;gap:var(--sp-1) var(--sp-3);margin:0 0 var(--sp-3);padding:var(--sp-2) var(--sp-3);
+                border:1px solid var(--border);border-radius:var(--r-panel);background:var(--surface)}
+  .ol-item{display:inline-flex;align-items:center;gap:var(--sp-1);font-size:12px}
+  .ol-sw{width:12px;height:12px;flex:0 0 12px;border-radius:var(--r-chip);border:1px solid var(--border)}
 
-  /* ---- cap-compliance quick view (Teams tab strip) ---- */
-  .cc-wrap{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:10px 12px;margin-bottom:14px}
-  .cc-head{font-weight:800;font-size:13.5px;margin-bottom:9px;display:flex;align-items:center;gap:7px;line-height:1.3}
-  .cc-dot{width:9px;height:9px;border-radius:50%;flex:0 0 9px}
-  .cc-dot.good{background:var(--grn)} .cc-dot.bad{background:var(--red)}
-  .cc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:7px}
-  .cc-chip{display:flex;flex-direction:column;gap:1px;border:1px solid var(--line);border-left:3px solid var(--line);
-           border-radius:8px;padding:6px 9px;background:var(--panel2);line-height:1.2}
-  .cc-chip.room-ok{border-left-color:var(--grn)} .cc-chip.room-over{border-left-color:var(--red)}
-  .cc-own{font-weight:800;font-size:13px}
-  .cc-tot{font-weight:800;font-size:12.5px;font-variant-numeric:tabular-nums}
-  .cc-cap{color:var(--mut);font-weight:700}
-  .cc-room{font-size:11.5px;font-weight:700}
-  .cc-chip.room-ok .cc-room{color:var(--grn)} .cc-chip.room-over .cc-room{color:var(--red)}
+  /* By-Position $ chart */
+  .bc-head{font-size:15px;font-weight:600;margin:var(--sp-1) 0 var(--sp-3)}
+  .bc-chart{display:flex;flex-direction:column;gap:var(--sp-2)}
+  .bc-row{display:grid;grid-template-columns:40px 1fr auto;align-items:center;gap:var(--sp-2)}
+  .bc-lab{font:600 13px/1 var(--font-display);letter-spacing:.04em;text-align:right}
+  .bc-track{height:16px;background:var(--surface-2);border-radius:2px;overflow:hidden}
+  .bc-bar{height:100%;border-radius:2px;min-width:2px}
+  .bc-val{font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .bc-n{color:var(--text-2);font-weight:400;font-size:12px}
+  .pos-bg-QB{background:var(--pos-qb)}.pos-bg-RB{background:var(--pos-rb)}.pos-bg-WR{background:var(--pos-wr)}
+  .pos-bg-TE{background:var(--pos-te)}.pos-bg-K{background:var(--pos-k)}.pos-bg-DEF{background:var(--pos-def)}
+  .pos-bg-DL{background:var(--pos-dl)}.pos-bg-LB{background:var(--pos-lb)}.pos-bg-DB{background:var(--pos-db)}
 
-  /* ---- By-Position $ bar chart (Salary Grid chart view) ---- */
-  .bc-head{font-size:14px;font-weight:800;margin:4px 0 12px}
-  .bc-head .room-over{color:var(--red)} .bc-head .room-ok{color:var(--grn)}
-  .bc-chart{display:flex;flex-direction:column;gap:8px}
-  .bc-row{display:grid;grid-template-columns:42px 1fr auto;align-items:center;gap:9px}
-  .bc-lab{font-weight:800;font-size:12px;text-align:right}
-  .bc-track{background:var(--panel2);border:1px solid var(--line);border-radius:7px;height:22px;overflow:hidden}
-  .bc-bar{height:100%;border-radius:6px 0 0 6px;min-width:2px}
-  .bc-val{font-weight:800;font-size:13px;font-variant-numeric:tabular-nums;white-space:nowrap}
-  .bc-n{color:var(--mut);font-weight:700;font-size:11px}
-  /* full-saturation bar fills per position (bars need a visible solid, unlike the tile tints) */
-  .pos-bg-QB{background:#f0913e}.pos-bg-RB{background:#33e08a}.pos-bg-WR{background:#4aa8ff}
-  .pos-bg-TE{background:#b878ff}.pos-bg-K{background:#95a5a6}.pos-bg-DEF{background:#ff6060}
-  .pos-bg-DL{background:#e0679a}.pos-bg-LB{background:#67c7e0}.pos-bg-DB{background:#c7e067}
-
-  /* trade builder (multi-team) */
-  .trade-teams{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:8px}
-  .tt-chip{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;
-           background:var(--panel);cursor:pointer;user-select:none;font-size:13px;font-weight:700}
-  .tt-chip.on{border-color:var(--accent);background:rgba(74,168,255,.10)}
-  .tt-chip .oav{width:26px;height:26px;flex:0 0 26px;border-radius:50%;object-fit:cover;background:var(--panel2)}
-  .tt-note{color:var(--mut);font-size:12px;margin:2px 0 14px}
-
-  /* trade panels: side-by-side on desktop, stacked single-column on mobile */
-  /* auto-fill so 2–10 panels WRAP to multiple rows on desktop (readable min width), stack on mobile */
-  .trade-panels{display:grid;gap:12px;margin-bottom:6px;grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+  /* ---- Trade builder ---- */
+  .cap-help{margin:0 0 var(--sp-3)}
+  .cap-help p{margin:var(--sp-2) 0 0;font-size:13px;color:var(--text-2);max-width:68ch}
+  .tt-chips{display:flex;flex-wrap:wrap;gap:var(--sp-2);margin:var(--sp-2) 0}
+  .tt-chips .oav{width:20px;height:20px;flex:0 0 20px}
+  .tt-note{color:var(--text-2);font-size:var(--fs-meta);margin:0 0 var(--sp-3)}
+  .trade-panels{display:grid;gap:var(--sp-3);grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
   @media(max-width:620px){.trade-panels{grid-template-columns:1fr}}
-  .side{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:14px;min-width:0;overflow:hidden}
-  .side h3{margin:0 0 8px;font-size:14px;font-weight:800;display:flex;align-items:center;gap:8px}
-  .side h3 .oav{width:26px;height:26px;border-radius:50%;object-fit:cover;background:var(--panel2)}
-  input.psearch{width:100%;background:var(--panel2);color:var(--txt);border:1px solid var(--line);
-                 border-radius:8px;padding:8px 10px;font-size:13px;margin-bottom:8px}
-  input.psearch:focus{outline:none;border-color:var(--accent)}
-  .side .ctrls{padding:0 0 8px}
-  .picklist{max-height:320px;overflow-y:auto;border:1px solid var(--line);border-radius:8px;padding:6px}
-  .pick{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:6px;font-size:13px}
-  .pick:hover{background:var(--panel2)}
-  .pick>input[type=checkbox]{accent-color:var(--accent);cursor:pointer;flex:0 0 auto}
-  .pick .nm{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;cursor:pointer}
-  .pick .amt{font-weight:800;font-variant-numeric:tabular-nums;color:var(--mut);flex:0 0 auto}
-  .pick.sel{background:rgba(74,168,255,.06)}
-  .pick.sel .amt{color:var(--txt)}
-  .dest{flex:0 0 auto;background:var(--panel2);color:var(--txt);border:1px solid var(--accent);border-radius:7px;
-        padding:3px 6px;font-size:11.5px;font-weight:700;max-width:120px;cursor:pointer}
-  .dest:focus{outline:none}
+  .side{min-width:0;margin:0;overflow:hidden}
+  .side-tot{margin-left:auto;font-size:13px;color:var(--text-2);font-variant-numeric:tabular-nums}
+  .side-ctrls{display:flex;gap:var(--sp-2);padding:var(--sp-2) var(--sp-3);border-bottom:1px solid var(--border)}
+  .side-ctrls .bs-input{flex:1 1 auto;min-width:0}
+  .picklist{max-height:360px;overflow-y:auto}
+  .list-head{padding:var(--sp-2) var(--sp-3) var(--sp-1);border-bottom:1px solid var(--border)}
+  .pick{display:flex;align-items:center;gap:var(--sp-2);min-height:40px;padding:0 var(--sp-3);border-bottom:1px solid var(--border);font-size:13px}
+  .pick:hover{background:var(--surface-2)}
+  .pick .nm{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  .pick .amt{font-variant-numeric:tabular-nums;color:var(--text-2);flex:0 0 auto}
+  .pick.sel{background:var(--surface-2)}
+  .pick.sel .amt{color:var(--text)}
+  .pick .dest{flex:0 0 auto;min-height:32px;max-width:132px}
+  .result{margin-top:var(--sp-4)}
+  .verdict{margin:var(--sp-3) 0 0;font-size:15px;font-weight:600}
 
-  .result{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:16px;margin-top:6px}
-  /* result cards: auto-fill wrap for up to 10 teams, stack on mobile */
-  .rcols{display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}
-  @media(max-width:560px){.rcols{grid-template-columns:1fr}}
-  .rteam{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
-  .rteam.over{border-color:var(--red)}
-  .rteam .rt-name{font-weight:800;font-size:13.5px;margin-bottom:6px}
-  .rline{display:grid;grid-template-columns:1fr auto;gap:8px;padding:4px 0;font-size:12.5px}
-  .rline .lab{color:var(--mut)}
-  .rline .val{font-weight:800;font-variant-numeric:tabular-nums}
-  .rt-after{font-size:14px;font-weight:800;font-variant-numeric:tabular-nums;padding-top:6px;border-top:1px solid var(--line);margin-top:4px}
-  .verdict{margin-top:12px;padding:12px;border-radius:9px;font-weight:800;font-size:14px;text-align:center}
-  .verdict.ok{background:rgba(51,224,138,.10);color:var(--grn);border:1px solid var(--grn)}
-  .verdict.bad{background:rgba(255,96,96,.10);color:var(--red);border:1px solid var(--red)}
-  .swap-note{color:var(--mut);font-size:11.5px;margin-top:8px;text-align:center;line-height:1.5}
-  .foot{color:var(--mut);font-size:11.5px;margin-top:26px;text-align:center;line-height:1.6}
-  /* screenshot-ready trade summary */
-  .ts-card{margin-top:16px;border:1px solid var(--line);border-radius:12px;background:var(--panel2);padding:14px 16px}
-  .ts-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:12px}
-  .ts-title{font-weight:800;font-size:16px}
-  .ts-date{color:var(--mut);font-size:12px;font-weight:600}
-  .ts-teams{display:flex;flex-direction:column;gap:12px}
-  .ts-team{border:1px solid var(--line);border-radius:10px;padding:11px 12px;background:var(--panel)}
-  .ts-team.over{border-color:var(--red)}
-  .ts-tname{display:flex;align-items:center;gap:8px;font-weight:800;font-size:14px;margin-bottom:9px}
-  .ts-av{width:24px;height:24px;flex:0 0 24px;border-radius:50%;object-fit:cover;background:var(--panel2)}
-  .ts-cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  @media(max-width:420px){.ts-cols{grid-template-columns:1fr;gap:8px}}
-  .ts-h{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
-  .ts-h.gives{color:var(--red)} .ts-h.gets{color:var(--grn)}
-  .ts-list{list-style:none;margin:0;padding:0}
-  .ts-list li{font-size:13px;font-weight:600;padding:2px 0;display:flex;justify-content:space-between;gap:10px}
-  .ts-amt{color:var(--mut);font-weight:800;font-variant-numeric:tabular-nums;flex:0 0 auto}
-  .ts-sub{font-size:12px;font-weight:800;color:var(--txt);margin-top:4px;border-top:1px dashed var(--line);padding-top:3px}
-  .ts-none{color:var(--mut);font-size:13px}
-  .ts-after{margin-top:10px;padding-top:9px;border-top:1px solid var(--line);font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
-  .ts-after b{font-weight:800} .ts-over{color:var(--red)}
-  .ts-verdict{margin-top:12px;padding:9px;border-radius:8px;text-align:center;font-weight:800;font-size:14px}
-  .ts-verdict.ok{color:var(--grn);background:rgba(51,224,138,.10);border:1px solid var(--grn)}
-  .ts-verdict.bad{color:var(--red);background:rgba(255,96,96,.10);border:1px solid var(--red)}
-  .ts-foot{color:var(--mut);font-size:11px;text-align:center;margin-top:10px}
-  .ts-actions{display:flex;align-items:center;gap:10px;margin-top:10px}
-  .hide{display:none}
+  /* screenshot-ready trade summary: flat panel, no box-in-box */
+  .ts-card{margin:var(--sp-4) 0 0}
+  .ts-head{justify-content:space-between}
+  .ts-title{font:600 var(--fs-card)/1.2 var(--font-display);letter-spacing:.04em;text-transform:uppercase}
+  .bs-panel-head .ts-date{color:var(--text-2);font-size:var(--fs-meta)}
+  .ts-team{padding:var(--sp-3);border-bottom:1px solid var(--border)}
+  .ts-tname{display:flex;align-items:center;gap:var(--sp-2);font-size:15px;font-weight:600;margin-bottom:var(--sp-2)}
+  .ts-av{width:24px;height:24px;flex:0 0 24px;border-radius:50%;object-fit:cover;background:var(--surface-2)}
+  .ts-cols{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3)}
+  @media(max-width:420px){.ts-cols{grid-template-columns:1fr;gap:var(--sp-2)}}
+  .bs-micro.gives{color:var(--down)} .bs-micro.gets{color:var(--up)}
+  .ts-list{list-style:none;margin:var(--sp-1) 0 0;padding:0}
+  .ts-list li{font-size:13px;padding:2px 0;display:flex;justify-content:space-between;gap:var(--sp-2)}
+  .ts-amt{color:var(--text-2);font-variant-numeric:tabular-nums;flex:0 0 auto}
+  .ts-sub{font-size:12px;font-weight:600;margin-top:var(--sp-1);border-top:1px dashed var(--border);padding-top:var(--sp-1);font-variant-numeric:tabular-nums}
+  .ts-none{color:var(--text-2);font-size:13px}
+  .ts-after{margin-top:var(--sp-2);font-size:13px;font-variant-numeric:tabular-nums}
+  .ts-after b{font-weight:600} .ts-over{color:var(--down)}
+  .ts-verdict{margin:0;padding:var(--sp-3);font-size:15px;font-weight:600}
+  .ts-foot{color:var(--text-2);font-size:var(--fs-micro);margin:0;padding:0 var(--sp-3) var(--sp-3)}
+  .ts-actions{display:flex;align-items:center;gap:var(--sp-2);flex-wrap:wrap;margin-top:var(--sp-3)}
+  .copy-msg{color:var(--text-2);font-size:var(--fs-meta)}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <h1>Busch Apple — Salary & Trade Tool</h1>
-    <div class="sub" id="sub">Loading live salaries from Sleeper…</div>
-    <div class="capnote" id="capNote">Salaries pulled live from Sleeper on each load. Honest calculator, no fair/unfair verdict.</div>
-  </header>
-
-  <div class="tabs">
-    <div class="tab" data-tab="table">Teams</div>
-    <div class="tab active" data-tab="grid">Salary Grid</div>
-    <div class="tab" data-tab="trade">Trade Builder</div>
+<header class="bs-appbar">
+  <div class="ab-id">
+    <h1 class="bs-wordmark">Busch Apple</h1>
+    <span class="bs-meta" id="sub">Salary &amp; trade tool · 10 teams · 2026 · cap $515</span>
   </div>
+  <div class="ab-tools">
+    <span class="bs-fresh" id="status" role="status">Sleeper · loading…</span>
+    <button type="button" class="bs-btn" id="refreshBtn">Refresh</button>
+    <label class="ab-auto"><input type="checkbox" id="autoRefresh"> Auto 60s</label>
+    <button type="button" class="bs-btn" id="themeBtn" aria-label="Color theme: system. Activate to change.">Theme: System</button>
+  </div>
+</header>
 
-  <div class="bar">
-    <button class="btn primary" id="refreshBtn">↻ Refresh</button>
-    <span class="status" id="status"></span>
-    <label class="status" style="margin-left:auto"><input type="checkbox" id="autoRefresh"> auto-refresh 60s</label>
+<div class="wrap">
+  <div class="tabs-row">
+    <div class="bs-tabs" role="tablist" aria-label="Sections" id="tabs">
+      <button type="button" role="tab" id="tab-teams" data-key="teams" aria-controls="pane-table" aria-selected="false" tabindex="-1">Teams</button>
+      <button type="button" role="tab" id="tab-grid"  data-key="grid"  aria-controls="pane-grid" aria-selected="true" tabindex="0">Salary Grid</button>
+      <button type="button" role="tab" id="tab-trade" data-key="trade" aria-controls="pane-trade" aria-selected="false" tabindex="-1">Trade Builder</button>
+    </div>
   </div>
 
   <div id="errbox"></div>
 
-  <div id="pane-table" class="hide"><div class="loading">Loading…</div></div>
-  <div id="pane-grid"><div class="loading">Loading…</div></div>
-  <div id="pane-trade" class="hide"><div class="loading">Loading…</div></div>
-
-  <div class="foot" id="foot"></div>
+  <div id="pane-table" class="hide" role="tabpanel" aria-labelledby="tab-teams" tabindex="0"><div class="loading">Loading…</div></div>
+  <div id="pane-grid" role="tabpanel" aria-labelledby="tab-grid" tabindex="0"><div class="loading">Loading…</div></div>
+  <div id="pane-trade" class="hide" role="tabpanel" aria-labelledby="tab-trade" tabindex="0"><div class="loading">Loading…</div></div>
 </div>
 
 <script>
@@ -348,21 +233,20 @@ const OWNER = {
   rearmostzeus:"Zach", Nyquilbandit:"Henry", Sdljunce:"Seth", ChayDyck:"Chay", RileyHeid13:"Riley",
   JunceBoxes:"Nick", charliehorejsi:"Charlie", TheZynBandit:"Bobby", DaBigDyck:"Ajay", BigBomboclaat69:"Jonah"
 };
-// Stable, visually distinct frame color per fantasy manager (keyed by display name). Chosen to be clear,
-// saturated BORDER colors that read against the muted position-tint tile backgrounds and don't duplicate the
-// position fills (QB orange / RB green / WR blue / TE purple / K grey / DEF red). Used only as the card frame.
+// Muted categorical color per fantasy manager (keyed by display name). Used ONLY as a 3px bar / legend swatch
+// (Salary Grid "Color: Owner"), never as text; the owner name is always shown as text too.
 const OWNER_COLORS = {
-  Zach:"#ff3b6b", Henry:"#ffd23f", Seth:"#00d1b2", Chay:"#8b5cf6", Riley:"#ff8c3b",
-  Nick:"#17b2ff", Charlie:"#e879f9", Bobby:"#7cff5c", Ajay:"#ff5ce1", Jonah:"#5c7cff"
+  Zach:"#4E79A7", Henry:"#F28E2B", Seth:"#76B7B2", Chay:"#B07AA1", Riley:"#E15759",
+  Nick:"#59A14F", Charlie:"#EDC948", Bobby:"#9C755F", Ajay:"#FF9DA7", Jonah:"#BAB0AC"
 };
-function ownerColor(name){ return OWNER_COLORS[name] || "#9aa6b4"; }
+function ownerColor(name){ return OWNER_COLORS[name] || "#8C95A3"; }
 const POS_ORDER = ["QB","RB","WR","TE","K","DEF","DL","LB","DB"];
 
 // ---- state ----
 let TEAMS = [];          // [{roster_id, owner, sn, avatar, players:[...], picks:[{year,round,label,key,fromRid}], total, room}]
 let PLAYERS = null;
 let AUTO = null;
-let ACTIVE_TAB = "grid";        // Salary Grid (cards) is the landing view; other tabs reachable via the bar
+let ACTIVE_TAB = "grid";        // hash key: "teams" | "grid" | "trade"; Salary Grid is the landing view
 const SELECTED = new Set();     // Teams tab: roster_ids or "__ALL__"
 const SORT = {};                // Teams tab per roster_id
 const FILTER = {};              // Teams tab per roster_id
@@ -370,7 +254,7 @@ const FILTER = {};              // Teams tab per roster_id
 // Salary Grid tab: league-wide sortable/filterable list of all rostered players
 let GRID_SORT = "amt";          // amt | pos | team | owner | name
 let GRID_DIR = -1;              // 1 asc, -1 desc (salary defaults high->low)
-let GRID_VIEW = "cards";        // "table" | "cards" | "chart" (same data; branch only the render) — default = Cards
+let GRID_VIEW = "table";        // "table" | "cards" | "chart" (same data; branch only the render) — default = Table (#grid/cards opens Cards)
 let GRID_CHART_TEAM = null;     // roster_id selected in the By-Position $ chart view (null -> first team)
 const GRID_FILTER = { pos:"ALL", team:"ALL", owner:"ALL" };
 
@@ -444,7 +328,7 @@ function imgFallback(img){
   }
 }
 window.imgFallback = imgFallback;
-function pickIcon(){ return `<span class="pick-ic">◆</span>`; }
+function pickIcon(){ return `<span class="pick-ic" aria-hidden="true">PK</span>`; }
 
 // ---- players dict cached 24h (keeps espn_id + team for images) ----
 async function loadPlayers(){
@@ -582,6 +466,15 @@ async function buildSalaries(){
   return teams;
 }
 
+// ---- UI state added by the 2026-10 redesign (presentation only; no salary data) ----
+let GRID_COLOR = "position";    // Salary Grid color mode: "position" | "owner" | "none" (hash wins over localStorage)
+const TEAMS_SORT = { key:"room", dir:-1 };   // Teams cap table sort (memory only); room/-1 = over-cap first, then most room
+const PANE = { teams:"table", grid:"grid", trade:"trade" };  // hash key -> pane id suffix
+let HASH_PENDING = false;       // a start-up link hash is waiting for TEAMS before it can be fully applied
+let LAST_HASH = null;           // last hash written/applied (hashchange ignores our own writes)
+let HASH_NOTE = "";             // one-line note when shared-link trade assets were dropped
+try{ const c = localStorage.getItem("busch-grid-color"); if(c==="position"||c==="owner"||c==="none") GRID_COLOR = c; }catch(e){}
+
 // ---- Teams tab: sort/filter ----
 function sortedFilteredPlayers(t){
   const mode = SORT[t.roster_id] || "sal";
@@ -606,41 +499,68 @@ function avatarImg(t, cls){ return t.avatar
   ? `<img class="${cls}" src="${t.avatar}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">`
   : `<span class="${cls}"></span>`; }
 
-// ---- League-wide cap-compliance quick view (at-a-glance strip) ----
-// Reuses t.total / t.room / CAP / the room-ok/room-over colors. Over-cap teams first, then most room.
-function complianceStrip(){
-  if(!SHOW_CAP) return "";   // when cap display is off there's no compliance to show
-  const rows = TEAMS.slice().sort((a,b) => {
-    const ao = a.total > CAP, bo = b.total > CAP;
-    if(ao !== bo) return ao ? -1 : 1;                 // over-cap first
-    return b.room - a.room;                           // then most room -> least
-  });
-  const over = rows.filter(t => t.total > CAP);
-  const compliant = rows.length - over.length;
-  const headline = over.length
-    ? `${compliant} of ${rows.length} teams cap-compliant · over: ${over.map(t=>esc(t.owner)).join(", ")}`
-    : `All ${rows.length} teams cap-compliant`;
-  const chips = rows.map(t => {
-    const isOver = t.total > CAP;
-    const cls = isOver ? "room-over" : "room-ok";
-    const roomTxt = isOver ? `$${Math.abs(t.room)} over` : `$${t.room} room`;
-    return `<div class="cc-chip ${cls}">
-      <span class="cc-own">${esc(t.owner)}</span>
-      <span class="cc-tot">$${t.total}<span class="cc-cap"> / ${CAP}</span></span>
-      <span class="cc-room">${roomTxt}</span>
-    </div>`;
+// ---- focus keeper: a repaint replaces innerHTML, so put focus back on the same control ----
+const FOCUS_KEYS = ["view","color","sort","csort","pick","tteam","pid","pickkey","destfor","filter","filterrid"];
+function focusKey(scope){
+  const a = document.activeElement;
+  if(!a || !scope.contains(a) || a === scope) return null;
+  if(a.id) return "#" + a.id;
+  for(const k of FOCUS_KEYS) if(a.dataset && a.dataset[k] != null) return `${a.tagName.toLowerCase()}[data-${k}="${a.dataset[k]}"]`;
+  return null;
+}
+function restoreFocus(scope, key){ if(!key) return; try{ const n = scope.querySelector(key); if(n) n.focus(); }catch(e){} }
+
+// ---- League-wide cap table (Teams tab) ----
+// Default order = over-cap first, then most room -> least (the old compliance-strip comparator, verbatim).
+function capCmp(a,b){
+  const ao = a.total > CAP, bo = b.total > CAP;
+  if(ao !== bo) return ao ? -1 : 1;                 // over-cap first
+  return b.room - a.room;                           // then most room -> least
+}
+function capSorted(){
+  const rows = TEAMS.slice();
+  const k = TEAMS_SORT.key, d = TEAMS_SORT.dir;
+  if(k === "room" && d === -1) return rows.sort(capCmp);
+  const val = { owner:t=>t.owner, total:t=>t.total, room:t=>t.room, players:t=>t.players.length, picks:t=>t.picks.length }[k] || (t=>t.room);
+  return rows.sort((a,b) => { const x = val(a), y = val(b);
+    const c = typeof x === "string" ? x.localeCompare(y) : x - y; return (d * c) || a.owner.localeCompare(b.owner); });
+}
+function capTable(){
+  const def = TEAMS.slice().sort(capCmp);
+  const over = def.filter(t => t.total > CAP);
+  const compliant = def.length - over.length;
+  const headline = !SHOW_CAP ? "" : (over.length
+    ? `${compliant} of ${def.length} teams cap-compliant · over: ${over.map(t=>esc(t.owner)).join(", ")}`
+    : `All ${def.length} teams cap-compliant`);
+  const allMode = SELECTED.has("__ALL__");
+  const th = (key, label, num) => {
+    const on = TEAMS_SORT.key === key;
+    const as = on ? ` aria-sort="${TEAMS_SORT.dir===1 ? "ascending" : "descending"}"` : "";
+    return `<th${num?` class="num"`:""}${as}><button type="button" class="bs-sort" data-csort="${key}">${label}</button></th>`;
+  };
+  const body = capSorted().map(t => {
+    const checked = (allMode || SELECTED.has(t.roster_id)) ? " checked" : "";
+    const room = t.room < 0 ? `<span class="bs-down">$${Math.abs(t.room)} over</span>` : `<span class="bs-up">$${t.room}</span>`;
+    return `<tr>
+      <td class="view-cell"><input type="checkbox" data-pick="${t.roster_id}"${checked} aria-label="Show ${esc(t.owner)}'s roster"></td>
+      <td><span class="cell-flex">${avatarImg(t,"oav")}<span>${esc(t.owner)}</span></span></td>
+      <td class="num">$${t.total}</td>
+      ${SHOW_CAP ? `<td class="num">${room}</td>` : ""}
+      <td class="num">${t.players.length}</td>
+      <td class="num">${t.picks.length}</td>
+    </tr>`;
   }).join("");
-  return `<div class="cc-wrap">
-    <div class="cc-head"><span class="cc-dot ${over.length?'bad':'good'}"></span>${headline}</div>
-    <div class="cc-grid">${chips}</div>
-  </div>`;
+  return (headline ? `<p class="cc-head ${over.length ? "bs-down" : "bs-up"}">${headline}</p>` : "")
+    + `<div class="bs-panel"><div class="bs-table-wrap"><table class="bs-table bs-table--stick1 cap-table">
+      <thead><tr><th class="view-cell">View</th>${th("owner","Owner")}${th("total","Total",1)}${SHOW_CAP ? th("room","Room",1) : ""}${th("players","Players",1)}${th("picks","Picks",1)}</tr></thead>
+      <tbody>${body}</tbody></table></div></div>`;
 }
 
-// ---- Teams tab card ----
+// ---- Teams tab roster panel ----
 function teamCard(t){
   const overCap = SHOW_CAP && t.total > CAP;
   const pct = Math.min(100, Math.round(t.total / CAP * 100));
-  const roomCls = t.room < 0 ? "room-over" : "room-ok";
+  const roomCls = t.room < 0 ? "bs-down" : "bs-up";
   const roomTxt = t.room < 0 ? `$${Math.abs(t.room)} over` : `$${t.room} room`;
   const sortMode = SORT[t.roster_id] || "sal";
   const fpos = FILTER[t.roster_id] || "ALL";
@@ -649,32 +569,33 @@ function teamCard(t){
   const sortOpts = [["sal","Salary"],["pos","Position"],["name","Name"]]
     .map(([v,l]) => `<option value="${v}"${sortMode===v?" selected":""}>${l}</option>`).join("");
   const ps = sortedFilteredPlayers(t);
-  const picksHtml = t.picks.length ? `<div class="subhd">Future picks · $0</div>` +
-    t.picks.map(pk => `<div class="prow">${pickIcon()}<span class="pname">${esc(pickLabel(pk, t.roster_id))}</span><span class="pick-sal">$0</span></div>`).join("") : "";
+  const rows = ps.length ? ps.map(p => `<tr>
+      <td class="pl"><span class="cell-flex">${playerImg(p)}<span class="nm-cell">${esc(p.name)}</span></span></td>
+      <td><span class="gpos pos-${esc(p.pos)}">${esc(p.pos)}</span></td>
+      <td class="bs-dim">${p.team ? esc(String(p.team).toUpperCase()) : "FA"}</td>
+      <td class="num">$${p.amt}</td>
+    </tr>`).join("") : `<tr><td colspan="4" class="bs-dim">No players at this position.</td></tr>`;
+  const picks = t.picks.length ? `<tr><td colspan="4"><span class="bs-micro">Future picks · $0</span></td></tr>` +
+    t.picks.map(pk => `<tr><td colspan="3"><span class="cell-flex">${pickIcon()}<span class="nm-cell">${esc(pickLabel(pk, t.roster_id))}</span></span></td><td class="num bs-dim">$0</td></tr>`).join("") : "";
 
-  return `<div class="team">
-    <div class="team-head">
-      ${avatarImg(t,"oav")}
-      <div class="team-name">${esc(t.owner)}<span class="sn">@${esc(t.sn)}</span></div>
-      <div class="team-fin">
-        <div class="team-total">$${t.total}${SHOW_CAP?`<span class="cap"> / ${CAP}</span>`:``}</div>
-        ${SHOW_CAP?`<div class="team-room ${roomCls}">${roomTxt}</div>`:`<div class="team-room" style="color:var(--mut)">total value</div>`}
-      </div>
+  return `<section class="bs-panel team" aria-label="${esc(t.owner)} roster">
+    <div class="bs-panel-head team-head">
+      <span class="team-id">${avatarImg(t,"oav")}<span><span class="bs-h2">${esc(t.owner)}</span><span class="sn">@${esc(t.sn)}</span></span></span>
+      <span class="team-fin">
+        <span class="team-total">$${t.total}${SHOW_CAP?`<span class="bs-dim"> / ${CAP}</span>`:``}</span>
+        ${SHOW_CAP?`<span class="${roomCls}">${roomTxt}</span>`:`<span class="bs-dim">total value</span>`}
+      </span>
+      <span class="team-ctrls">
+        <select class="bs-select" data-sort="${t.roster_id}" aria-label="Sort ${esc(t.owner)}'s roster">${sortOpts}</select>
+        <select class="bs-select" data-filter="${t.roster_id}" aria-label="Filter ${esc(t.owner)}'s roster by position">${posOpts}</select>
+      </span>
     </div>
-    ${SHOW_CAP?`<div class="capbar"><div class="fill ${overCap?'over':''}" style="width:${pct}%"></div></div>`:``}
-    <div class="ctrls">
-      <select data-sort="${t.roster_id}">${sortOpts}</select>
-      <select data-filter="${t.roster_id}">${posOpts}</select>
-    </div>
-    <div class="roster">
-      ${ps.length ? ps.map(p => `<div class="prow">
-        ${playerImg(p)}
-        <span class="pname">${esc(p.name)}<span class="ppos">${esc(p.pos)}</span>${teamTag(p)}</span>
-        <span class="psal">$${p.amt}</span>
-      </div>`).join("") : `<div class="status" style="padding:8px 0">No players at this position.</div>`}
-      ${picksHtml}
-    </div>
-  </div>`;
+    ${SHOW_CAP?`<div class="capbar" aria-hidden="true"><div class="fill ${overCap?'over':''}" style="width:${pct}%"></div></div>`:``}
+    <div class="bs-table-wrap bs-table-wrap--tall"><table class="bs-table roster-table">
+      <thead><tr><th>Player</th><th>Pos</th><th>NFL</th><th class="num">$</th></tr></thead>
+      <tbody>${rows}${picks}</tbody>
+    </table></div>
+  </section>`;
 }
 
 function wireTeamControls(scope){
@@ -687,19 +608,14 @@ function wireTeamControls(scope){
 }
 
 // ---- Teams tab ----
-function paintTable(){
+function paintTable(){ const el = document.getElementById("pane-table"); const fk = focusKey(el);
+  try { paintTableInner(); } finally { restoreFocus(el, fk); writeHash(); } }
+function paintTableInner(){
   const el = document.getElementById("pane-table");
   if(!TEAMS.length){ el.innerHTML = `<div class="loading">No teams.</div>`; return; }
-  const picker = `<div class="splash-h">Pick 1–4 teams to view side by side, or show all.</div>
-    <div class="picker">` + TEAMS.map(t => {
-      const sel = SELECTED.has(t.roster_id) ? " sel" : "";
-      return `<div class="pcard${sel}" data-pick="${t.roster_id}">
-        ${avatarImg(t,"oav")}<div class="ometa"><div class="oname">${esc(t.owner)}</div>
-        <div class="osub">$${t.total}${SHOW_CAP?` / ${CAP}`:``}</div></div></div>`;
-    }).join("") + `</div>
-    <div class="picker-actions">
-      <button class="btn sm" id="showAllBtn">Show all 10</button>
-      <button class="btn sm" id="clearSelBtn">Clear</button>
+  const actions = `<div class="cap-actions">
+      <button type="button" class="bs-btn" id="showAllBtn">Show all 10</button>
+      <button type="button" class="bs-btn" id="clearSelBtn">Clear</button>
       <span class="sel-count" id="selCount"></span>
     </div>`;
 
@@ -710,16 +626,22 @@ function paintTable(){
   else { shown = TEAMS.filter(t => SELECTED.has(t.roster_id)); nCol = Math.min(4, shown.length); }
 
   const cols = !shown.length
-    ? `<div class="status" style="padding:20px 0;text-align:center">Select a team above to see its roster, salaries, and picks.</div>`
+    ? `<p class="empty">Check View on up to 4 teams to see rosters, salaries and picks.</p>`
     : `<div class="cols n${nCol}">` + shown.map(teamCard).join("") + `</div>`;
 
-  el.innerHTML = complianceStrip() + picker + cols;
+  el.innerHTML = capTable() + actions + cols;
 
-  el.querySelectorAll("[data-pick]").forEach(c => c.addEventListener("click", () => {
+  el.querySelectorAll("input[data-pick]").forEach(c => c.addEventListener("change", () => {
     SELECTED.delete("__ALL__");
     const id = Number(c.dataset.pick);
     if(SELECTED.has(id)) SELECTED.delete(id);
     else { if(SELECTED.size >= 4){ const first = SELECTED.values().next().value; SELECTED.delete(first); } SELECTED.add(id); }
+    paintTable();
+  }));
+  el.querySelectorAll("button[data-csort]").forEach(b => b.addEventListener("click", () => {
+    const k = b.dataset.csort;
+    if(TEAMS_SORT.key === k) TEAMS_SORT.dir = -TEAMS_SORT.dir;
+    else { TEAMS_SORT.key = k; TEAMS_SORT.dir = (k === "owner") ? 1 : -1; }
     paintTable();
   }));
   const showAll = el.querySelector("#showAllBtn"); if(showAll) showAll.addEventListener("click", () => { SELECTED.clear(); SELECTED.add("__ALL__"); paintTable(); });
@@ -730,8 +652,8 @@ function paintTable(){
 }
 
 /* ============================ SALARY GRID (league-wide, sortable/filterable) ============================ */
-// A flat table of EVERY rostered player across all teams, with the Part-1-corrected salary
-// (current-owner acquisition price). Sort by any column; filter by position / NFL team / fantasy owner.
+// A flat table of EVERY rostered player across all teams, with the resolver's salary (p.amt).
+// Sort by any column; filter by position / NFL team / fantasy owner.
 
 // flatten all teams -> one row per rostered player
 function gridRows(){
@@ -748,8 +670,21 @@ function gridDistinct(rows, key){
   if(key==="pos") return POS_ORDER.filter(p=>s.has(p)).concat([...s].filter(p=>!POS_ORDER.includes(p)).sort());
   return [...s].sort();
 }
+// .bs-seg of aria-pressed buttons
+function segGroup(items, cur, attr, label){
+  return `<div class="bs-seg" role="group" aria-label="${label}">` + items.map(([v,l]) =>
+    `<button type="button" data-${attr}="${v}" aria-pressed="${cur===v?"true":"false"}">${l}</button>`).join("") + `</div>`;
+}
+// 3px left bar on the first cell / tile: position color, owner color, or none
+function colorBar(r){
+  if(GRID_COLOR === "position") return ` data-posbar="${esc(r.pos)}"`;
+  if(GRID_COLOR === "owner") return ` data-posbar="" style="--bar:${ownerColor(r.owner)}"`;
+  return "";
+}
 
-function paintGrid(){
+function paintGrid(){ const el = document.getElementById("pane-grid"); const fk = focusKey(el);
+  try { paintGridInner(); } finally { restoreFocus(el, fk); writeHash(); } }
+function paintGridInner(){
   const el = document.getElementById("pane-grid");
   if(!TEAMS.length){ el.innerHTML = `<div class="loading">No players.</div>`; return; }
   const all = gridRows();
@@ -774,18 +709,15 @@ function paintGrid(){
   }[GRID_SORT] || ((a,b)=>a.amt-b.amt);
   rows.sort((a,b) => dir * cmp(a,b));
 
-  const arrow = col => GRID_SORT===col ? (GRID_DIR===1 ? " ▲" : " ▼") : "";
   const opt = (val,sel,label) => `<option value="${esc(val)}"${sel===val?" selected":""}>${esc(label)}</option>`;
   const posSel  = [opt("ALL",GRID_FILTER.pos,"All positions")].concat(posList.map(p=>opt(p,GRID_FILTER.pos,p))).join("");
   const teamSel = [opt("ALL",GRID_FILTER.team,"All NFL teams")].concat(teamList.map(t=>opt(t,GRID_FILTER.team,t))).join("");
   const ownSel  = [opt("ALL",GRID_FILTER.owner,"All fantasy teams")].concat(ownerList.map(o=>opt(o,GRID_FILTER.owner,o))).join("");
 
-  // view toggle (Table / Cards) — same filtered+sorted rows, only the render branches
-  const viewToggle = `<div class="grid-view">
-    <button class="vbtn${GRID_VIEW==='table'?' on':''}" data-view="table">Table</button>
-    <button class="vbtn${GRID_VIEW==='cards'?' on':''}" data-view="cards">Cards</button>
-    <button class="vbtn${GRID_VIEW==='chart'?' on':''}" data-view="chart">By Position $</button>
-  </div>`;
+  // view toggle (Table / Cards / Chart): same filtered+sorted rows, only the render branches
+  const viewToggle = segGroup([["table","Table"],["cards","Cards"],["chart","By Position $"]], GRID_VIEW, "view", "Grid view");
+  const colorToggle = `<span class="seg-wrap"><span class="seg-lab" aria-hidden="true">Color:</span>`
+    + segGroup([["position","Position"],["owner","Owner"],["none","None"]], GRID_COLOR, "color", "Color by") + `</span>`;
 
   // sort dropdown (primary control for Cards view, which has no clickable headers; also usable in Table)
   const sortDefs = [["amt","Salary"],["pos","Position"],["team","NFL team"],["owner","Fantasy team"],["name","Player name"]];
@@ -794,12 +726,13 @@ function paintGrid(){
 
   const controls = `<div class="grid-ctrls">
     ${viewToggle}
-    <select id="gfPos">${posSel}</select>
-    <select id="gfTeam">${teamSel}</select>
-    <select id="gfOwner">${ownSel}</select>
-    <select id="gfSort">${sortSel}</select>
-    <button class="btn sm" id="gfDir" title="Reverse sort">${dirArrow}</button>
-    <button class="btn sm" id="gfReset">Reset</button>
+    ${colorToggle}
+    <select class="bs-select" id="gfPos" aria-label="Filter by position">${posSel}</select>
+    <select class="bs-select" id="gfTeam" aria-label="Filter by NFL team">${teamSel}</select>
+    <select class="bs-select" id="gfOwner" aria-label="Filter by fantasy team">${ownSel}</select>
+    <select class="bs-select" id="gfSort" aria-label="Sort by">${sortSel}</select>
+    <button type="button" class="bs-btn" id="gfDir" aria-label="Reverse sort order (now ${GRID_DIR===1?"ascending":"descending"})">${dirArrow}</button>
+    <button type="button" class="bs-btn" id="gfReset">Reset</button>
     <span class="grid-count">${rows.length} player${rows.length===1?"":"s"}</span>
   </div>`;
 
@@ -808,12 +741,12 @@ function paintGrid(){
     if(GRID_CHART_TEAM===null || !TEAMS.some(t=>t.roster_id===GRID_CHART_TEAM)) GRID_CHART_TEAM = TEAMS[0].roster_id;
     const t = TEAMS.find(x => x.roster_id===GRID_CHART_TEAM) || TEAMS[0];
     const teamOpts = TEAMS.map(x => `<option value="${x.roster_id}"${x.roster_id===t.roster_id?" selected":""}>${esc(x.owner)}</option>`).join("");
-    // sum corrected salaries per position for THIS team (reuses t.players[].amt = Part-1 value)
+    // sum salaries per position for THIS team (reuses t.players[].amt)
     const byPos = {};
     (t.players||[]).forEach(p => { const k = p.pos||"?"; (byPos[k] = byPos[k] || {sum:0,n:0}); byPos[k].sum += p.amt; byPos[k].n++; });
     const order = POS_ORDER.filter(p => byPos[p]).concat(Object.keys(byPos).filter(p => !POS_ORDER.includes(p)).sort());
     const maxSum = Math.max(1, ...order.map(p => byPos[p].sum));
-    const roomCls = t.room < 0 ? "room-over" : "room-ok";
+    const roomCls = t.room < 0 ? "bs-down" : "bs-up";
     const roomTxt = t.room < 0 ? `$${Math.abs(t.room)} over` : `$${t.room} room`;
     const bars = order.map(p => {
       const d = byPos[p], w = Math.round(d.sum / maxSum * 100);
@@ -823,17 +756,16 @@ function paintGrid(){
         <div class="bc-val">$${d.sum}<span class="bc-n"> · ${d.n}</span></div>
       </div>`;
     }).join("");
-    const controls = `<div class="grid-ctrls">
+    const chartControls = `<div class="grid-ctrls">
       ${viewToggle}
-      <select id="gcTeam">${teamOpts}</select>
+      <select class="bs-select" id="gcTeam" aria-label="Team">${teamOpts}</select>
       <span class="grid-count">${(t.players||[]).length} players</span>
     </div>`;
-    el.innerHTML = `<div class="grid-note">Salary invested per position for the selected team. Bar length = total $ at that position (sum of current-owner salaries); number after · is the player count.</div>`
-      + controls
-      + `<div class="bc-head"><b>${esc(t.owner)}</b> · $${t.total}${SHOW_CAP?` / ${CAP}`:``} ${SHOW_CAP?`<span class="${roomCls}">(${roomTxt})</span>`:``}</div>`
-      + `<div class="bc-chart">${bars || '<div class="status">No players.</div>'}</div>`;
+    el.innerHTML = chartControls
+      + `<div class="bc-head">${esc(t.owner)} · $${t.total}${SHOW_CAP?` / ${CAP}`:``} ${SHOW_CAP?`<span class="${roomCls}">(${roomTxt})</span>`:``}</div>`
+      + `<div class="bc-chart">${bars || '<p class="empty">No players.</p>'}</div>`;
     // wire view toggle + team selector
-    el.querySelectorAll(".vbtn").forEach(b => b.addEventListener("click", () => { GRID_VIEW = b.dataset.view; paintGrid(); }));
+    el.querySelectorAll("button[data-view]").forEach(b => b.addEventListener("click", () => { GRID_VIEW = b.dataset.view; paintGrid(); }));
     const gcTeam = el.querySelector("#gcTeam");
     if(gcTeam) gcTeam.addEventListener("change", () => { GRID_CHART_TEAM = Number(gcTeam.value); paintGrid(); });
     return;
@@ -841,56 +773,52 @@ function paintGrid(){
 
   let view;
   if(GRID_VIEW === "cards"){
-    // dense, position-colored tiles; auto-fill grid flows left->right then wraps down (reading order)
-    // owner-colored FRAME: border-color + a 2px inset ring in the manager's color (inset = no layout
-    // shift / no 3-across overflow). The position tint stays the background fill.
-    view = `<div class="card-grid">` + rows.map(r => { const oc = ownerColor(r.owner);
-      return `<div class="ptile pos-b-${esc(r.pos)}" style="border-color:${oc};box-shadow:inset 0 0 0 2px ${oc}">
+    // dense neutral tiles; auto-fill grid flows left->right then wraps down (reading order)
+    view = `<div class="card-grid">` + rows.map(r => `<div class="ptile"${colorBar(r)}>
       <div class="pt-face">${playerImg(r._p)}</div>
       <div class="pt-name">${esc(r.name)}</div>
-      <div class="pt-meta"><span class="pt-pos pos-${esc(r.pos)}">${esc(r.pos)}</span><span class="pt-team">${r.team?esc(r.team):"FA"}</span></div>
-      <div class="pt-own" style="color:${oc}">${esc(r.owner)}</div>
+      <div class="pt-meta"><span class="pt-pos${GRID_COLOR==="position"?` pos-${esc(r.pos)}`:""}">${esc(r.pos)}</span><span class="pt-team">${r.team?esc(r.team):"FA"}</span></div>
+      <div class="pt-own">${esc(r.owner)}</div>
       <div class="pt-sal">$${r.amt}</div>
-    </div>`; }).join("") + `</div>`;
+    </div>`).join("") + `</div>`;
   } else {
-    const head = `<thead><tr>
-      <th class="g-ply" data-sort="name">Player${arrow("name")}</th>
-      <th data-sort="pos">Pos${arrow("pos")}</th>
-      <th data-sort="team">NFL${arrow("team")}</th>
-      <th data-sort="owner">Fantasy Team${arrow("owner")}</th>
-      <th class="g-sal" data-sort="amt">Salary${arrow("amt")}</th>
-    </tr></thead>`;
+    const th = (col, label, cls) => {
+      const on = GRID_SORT === col;
+      const as = on ? ` aria-sort="${GRID_DIR===1 ? "ascending" : "descending"}"` : "";
+      return `<th${cls?` class="${cls}"`:""}${as}><button type="button" class="bs-sort" data-sort="${col}">${label}</button></th>`;
+    };
+    const head = `<thead><tr>${th("name","Player")}${th("pos","Pos")}${th("team","NFL")}${th("owner","Owner")}${th("amt","Salary","num")}</tr></thead>`;
     const body = `<tbody>` + rows.map(r => `<tr>
-      <td class="g-ply"><span class="g-pcell">${playerImg(r._p)}<span class="g-pname">${esc(r.name)}</span></span></td>
-      <td><span class="gpos pos-${esc(r.pos)}">${esc(r.pos)}</span></td>
-      <td class="g-nfl">${r.team ? esc(r.team) : '<span class="g-fa">FA</span>'}</td>
-      <td class="g-own">${esc(r.owner)}</td>
-      <td class="g-sal"><span class="salchip">$${r.amt}</span></td>
+      <td${colorBar(r)}><span class="cell-flex">${playerImg(r._p)}<span class="g-pname">${esc(r.name)}</span></span></td>
+      <td><span class="gpos${GRID_COLOR==="position"?` pos-${esc(r.pos)}`:""}">${esc(r.pos)}</span></td>
+      <td>${r.team ? esc(r.team) : '<span class="bs-dim">FA</span>'}</td>
+      <td class="bs-dim">${esc(r.owner)}</td>
+      <td class="num">$${r.amt}</td>
     </tr>`).join("") + `</tbody>`;
-    view = `<div class="grid-wrap"><table class="sgrid">${head}${body}</table></div>`;
+    view = `<div class="bs-panel"><div class="bs-table-wrap bs-table-wrap--tall"><table class="bs-table bs-table--stick1">${head}${body}</table></div></div>`;
   }
 
-  const sortNote = GRID_VIEW==="cards"
-    ? ` Use the controls to sort/filter.`
-    : ` Tap a column header to sort; tap again to reverse.`;
-  // owner-color legend (cards view only) so the tile frames are decodable; league order, compact
-  const ownerLegend = GRID_VIEW==="cards"
-    ? `<div class="owner-legend">` + TEAMS.map(t => {
+  // owner-color legend (Color: Owner) so the bars are decodable; league order, compact
+  const ownerLegend = GRID_COLOR==="owner"
+    ? `<div class="owner-legend" aria-label="Owner colors">` + TEAMS.map(t => {
         const oc = ownerColor(t.owner);
         return `<span class="ol-item"><span class="ol-sw" style="background:${oc}"></span>${esc(t.owner)}</span>`;
       }).join("") + `</div>`
     : "";
-  const frameNote = GRID_VIEW==="cards" ? ` Tile border = the fantasy manager who rosters that player (see legend).` : "";
-  el.innerHTML = `<div class="grid-note">Every rostered player, league-wide. Salary = <b>current-owner acquisition price</b> (auction, or the current owner's winning FAAB bid).${sortNote}${frameNote}</div>`
-    + controls + ownerLegend + view;
+  el.innerHTML = controls + ownerLegend + view;
 
-  // wire the Table/Cards toggle
-  el.querySelectorAll(".vbtn").forEach(b => b.addEventListener("click", () => {
+  // wire the view + color toggles
+  el.querySelectorAll("button[data-view]").forEach(b => b.addEventListener("click", () => {
     GRID_VIEW = b.dataset.view; paintGrid();
   }));
+  el.querySelectorAll("button[data-color]").forEach(b => b.addEventListener("click", () => {
+    GRID_COLOR = b.dataset.color;
+    try{ localStorage.setItem("busch-grid-color", GRID_COLOR); }catch(e){}
+    paintGrid();
+  }));
   // wire header sort (table view only)
-  el.querySelectorAll("th[data-sort]").forEach(th => th.addEventListener("click", () => {
-    const col = th.dataset.sort;
+  el.querySelectorAll("button[data-sort]").forEach(btn => btn.addEventListener("click", () => {
+    const col = btn.dataset.sort;
     if(GRID_SORT===col){ GRID_DIR = -GRID_DIR; }
     else { GRID_SORT = col; GRID_DIR = (col==="amt") ? -1 : 1; }   // salary defaults high->low, text asc
     paintGrid();
@@ -913,16 +841,12 @@ function paintGrid(){
 /* ============================ TRADE BUILDER (multi-team) ============================ */
 
 function capExplainer(){
-  const active515 = CAP >= 515;
-  return `<div class="explain">
-    <b>How the cap works.</b> The cap is currently <b>$${CAP}</b>${active515 ? "" : " (the auction budget)"}.
-    ${active515
-      ? `That's the $365 auction budget plus the $150 FAAB, treated as one combined salary cap.`
-      : `If the league vote passes, the in-season cap becomes <b>$515</b> — the $365 auction budget plus the $150 FAAB, treated as one combined salary cap.`}
-    That extra room is what lets trades actually happen: you can take on a big contract without instantly breaking the cap.
-    FAAB isn't traded on its own, it's just part of your $${active515 ? 515 : 515}. Next year the cap resets to the auction base plus its increase, and FAAB salaries carry over.
-    <br><b>Draft picks trade at $0</b> and never count toward the cap. Each pick's draft slot is set by final standings — non-playoff teams are ordered at the end of the regular season, then the playoff teams fill the rest after the playoffs, just like the NFL. The pick's salary is assigned from that slot once the order is set.
-  </div>`;
+  return `<details class="bs-details cap-help"><summary>How the cap works</summary>
+    <p>The cap is $${CAP}: the $365 auction budget plus the $150 FAAB, one combined cap.
+    Draft picks trade at $0 and never count toward it.
+    Salary travels with a player in a trade.
+    A dropped player has no salary, so the next team pays its winning FAAB bid, or $1 for a free-agent pickup.</p>
+  </details>`;
 }
 
 function tradeTeamObjects(){ return TRADE_TEAMS.map(teamByRid).filter(Boolean); }
@@ -939,14 +863,15 @@ function assetKindKey(kind, id){ return `${kind}:${id}`; }
 function paintTrade(){
   const el = document.getElementById("pane-trade");
   if(!TEAMS.length){ el.innerHTML = `<div class="loading">No teams.</div>`; return; }
+  const fk = focusKey(el);
 
-  // team chooser chips (toggle teams into the trade; 2-4)
-  const chips = `<div class="splash-h">Add teams to the trade (2–10).</div>
-    <div class="trade-teams">` + TEAMS.map(t => {
-      const on = TRADE_TEAMS.includes(t.roster_id) ? " on" : "";
-      return `<div class="tt-chip${on}" data-tteam="${t.roster_id}">${avatarImg(t,"oav")}<span>${esc(t.owner)}</span></div>`;
+  // team chooser (toggle teams into the trade; 2-10)
+  const chips = `<div class="bs-micro">Teams in the trade (2–10)</div>
+    <div class="tt-chips" role="group" aria-label="Teams in the trade">` + TEAMS.map(t => {
+      const on = TRADE_TEAMS.includes(t.roster_id);
+      return `<button type="button" class="bs-btn" data-tteam="${t.roster_id}" aria-pressed="${on?"true":"false"}">${avatarImg(t,"oav")}<span>${esc(t.owner)}</span></button>`;
     }).join("") + `</div>
-    <div class="tt-note">${TRADE_TEAMS.length<2 ? "Pick at least two teams." : `${TRADE_TEAMS.length}-team trade. Check an asset, then choose where it goes.`}</div>`;
+    <p class="tt-note">${TRADE_TEAMS.length<2 ? "Pick at least two teams." : `${TRADE_TEAMS.length}-team trade. Check an asset, then choose where it goes.`}${HASH_NOTE?` ${esc(HASH_NOTE)}`:""}</p>`;
 
   // one panel per team in the trade
   let panels = "";
@@ -965,9 +890,9 @@ function paintTrade(){
       const key = assetKindKey("p", p.pid);
       const a = TRADE_ASSETS.get(key);
       const on = a && a.fromRid===rid;
-      const dest = on ? `<select class="dest" data-destfor="${key}">${destOptions(rid, a.toRid)}</select>` : "";
+      const dest = on ? `<select class="bs-select dest" data-destfor="${key}" aria-label="Send ${esc(p.name)} to">${destOptions(rid, a.toRid)}</select>` : "";
       return `<div class="pick ${on?'sel':''}">
-        <input type="checkbox" data-asset="player" data-rid="${rid}" data-pid="${p.pid}" ${on?"checked":""}>
+        <input type="checkbox" data-asset="player" data-rid="${rid}" data-pid="${p.pid}" ${on?"checked":""} aria-label="Trade ${esc(p.name)}">
         ${playerImg(p)}
         <span class="nm">${esc(p.name)}<span class="ppos">${esc(p.pos)}</span>${teamTag(p)}</span>
         ${dest || `<span class="amt">$${p.amt}</span>`}
@@ -978,29 +903,32 @@ function paintTrade(){
       const key = pk.key; // "k:holderRid:year-round-origRid"
       const a = TRADE_ASSETS.get(key);
       const on = a && a.fromRid===rid;
-      const dest = on ? `<select class="dest" data-destfor="${esc(key)}">${destOptions(rid, a.toRid)}</select>` : "";
+      const dest = on ? `<select class="bs-select dest" data-destfor="${esc(key)}" aria-label="Send ${esc(pk.label)} to">${destOptions(rid, a.toRid)}</select>` : "";
       return `<div class="pick ${on?'sel':''}">
-        <input type="checkbox" data-asset="pick" data-rid="${rid}" data-pickkey="${esc(pk.ykey)}" ${on?"checked":""}>
+        <input type="checkbox" data-asset="pick" data-rid="${rid}" data-pickkey="${esc(pk.ykey)}" ${on?"checked":""} aria-label="Trade ${esc(pickLabel(pk, rid))}">
         ${pickIcon()}
         <span class="nm">${esc(pickLabel(pk, rid))} <span class="ppos">$0</span></span>
         ${dest || `<span class="amt">pick</span>`}
       </div>`;
     }).join("");
 
-    panels += `<div class="side">
-      <h3>${avatarImg(t,"oav")} ${esc(t.owner)} <span class="status" style="font-weight:600">($${t.total}${SHOW_CAP?` / ${CAP}`:``})</span></h3>
-      <input class="psearch" type="search" placeholder="Search ${esc(t.owner)}'s players…" data-searchrid="${rid}" value="${esc(ui.q||"")}">
-      <div class="ctrls"><select data-filterrid="${rid}">${fposOpts}</select></div>
-      <div class="picklist">
-        ${playerRows || `<div class="status" style="padding:8px">No matching players.</div>`}
-        ${t.picks.length ? `<div class="subhd">Future picks · $0</div>${pickRows}` : ""}
+    panels += `<section class="bs-panel side" aria-label="${esc(t.owner)}">
+      <div class="bs-panel-head">${avatarImg(t,"oav")}<span class="bs-h2">${esc(t.owner)}</span><span class="side-tot">$${t.total}${SHOW_CAP?` / ${CAP}`:``}</span></div>
+      <div class="side-ctrls">
+        <input class="bs-input" type="search" placeholder="Search players" aria-label="Search ${esc(t.owner)}'s players" data-searchrid="${rid}" value="${esc(ui.q||"")}">
+        <select class="bs-select" data-filterrid="${rid}" aria-label="Filter ${esc(t.owner)}'s players by position">${fposOpts}</select>
       </div>
-    </div>`;
+      <div class="picklist">
+        ${playerRows || `<p class="empty">No matching players.</p>`}
+        ${t.picks.length ? `<div class="list-head bs-micro">Future picks · $0</div>${pickRows}` : ""}
+      </div>
+    </section>`;
   }
 
   const panelsWrap = TRADE_TEAMS.length>=2 ? `<div class="trade-panels">${panels}</div>` : "";
   el.innerHTML = capExplainer() + chips + panelsWrap + `<div id="tradeResult"></div>`;
   wireTrade(el);
+  restoreFocus(el, fk);
   renderTradeResult();
 }
 
@@ -1008,6 +936,7 @@ function wireTrade(el){
   // toggle teams in/out of the trade
   el.querySelectorAll("[data-tteam]").forEach(chip => chip.addEventListener("click", () => {
     const rid = Number(chip.dataset.tteam);
+    HASH_NOTE = "";
     if(TRADE_TEAMS.includes(rid)){
       TRADE_TEAMS = TRADE_TEAMS.filter(x => x !== rid);
       // drop any assets from/to this team
@@ -1035,6 +964,7 @@ function wireTrade(el){
     const rid = Number(e.target.dataset.rid);
     const others = TRADE_TEAMS.filter(x => x !== rid);
     const defaultTo = others.length ? others[0] : null;
+    HASH_NOTE = "";
     if(e.target.dataset.asset === "player"){
       const pid = e.target.dataset.pid, key = assetKindKey("p", pid);
       const t = teamByRid(rid); const p = t.players.find(x => x.pid===pid);
@@ -1064,10 +994,11 @@ function reconcileDestinations(){
   }
 }
 
-function renderTradeResult(){
+function renderTradeResult(){ try { renderTradeResultInner(); } finally { writeHash(); } }
+function renderTradeResultInner(){
   const box = document.getElementById("tradeResult"); if(!box) return;
   const teams = tradeTeamObjects();
-  if(teams.length < 2){ box.innerHTML = `<div class="result"><div class="status">Add at least two teams to build a trade.</div></div>`; return; }
+  if(teams.length < 2){ box.innerHTML = `<p class="empty">Add at least two teams to build a trade.</p>`; return; }
 
   // per-team salary in/out (picks are $0 so they don't move the total)
   const out = {}, inc = {}, movingPicks = {};
@@ -1080,37 +1011,33 @@ function renderTradeResult(){
     else { movingPicks[a.fromRid].out++; movingPicks[a.toRid].in++; }
   }
 
-  const cards = teams.map(t => {
+  const pk = n => n ? `<span class="bs-dim"> · ${n} pick${n===1?"":"s"}</span>` : "";
+  const rowsHtml = teams.map(t => {
     const o = out[t.roster_id]||0, i = inc[t.roster_id]||0;
     const proj = t.total - o + i;
     const room = CAP - proj, over = SHOW_CAP && proj > CAP;
     const mp = movingPicks[t.roster_id];
-    const pickLine = (mp.in||mp.out) ? `<div class="rline"><span class="lab">picks</span><span class="val">${mp.out?`-${mp.out}`:""}${mp.out&&mp.in?" / ":""}${mp.in?`+${mp.in}`:""} ($0)</span></div>` : "";
-    const afterLine = SHOW_CAP
-      ? `<div class="rt-after ${over?'room-over':''}">after: $${proj} / ${CAP}</div>
-         <div class="rline"><span class="lab">room</span><span class="val ${room<0?'room-over':'room-ok'}">${room<0?`$${Math.abs(room)} over`:`$${room} room`}</span></div>`
-      : `<div class="rt-after">total value after: $${proj}</div>`;
-    return `<div class="rteam ${over?'over':''}">
-      <div class="rt-name">${esc(t.owner)}</div>
-      <div class="rline"><span class="lab">now</span><span class="val">$${t.total}</span></div>
-      <div class="rline"><span class="lab">salary out / in</span><span class="val">-$${o} / +$${i}</span></div>
-      ${pickLine}
-      ${afterLine}
-    </div>`;
+    return `<tr>
+      <td>${esc(t.owner)}</td>
+      <td class="num">$${t.total}</td>
+      <td class="num">-$${o}${pk(mp.out)}</td>
+      <td class="num">+$${i}${pk(mp.in)}</td>
+      <td class="num${over?" bs-down":""}">$${proj}</td>
+      ${SHOW_CAP?`<td class="num"><span class="${room<0?"bs-down":"bs-up"}">${room<0?`$${Math.abs(room)} over`:`$${room}`}</span></td>`:""}
+    </tr>`;
   }).join("");
+  const table = `<div class="bs-panel"><div class="bs-table-wrap"><table class="bs-table bs-table--stick1">
+    <thead><tr><th>Team</th><th class="num">Now</th><th class="num">Out</th><th class="num">In</th><th class="num">After</th>${SHOW_CAP?`<th class="num">Room</th>`:""}</tr></thead>
+    <tbody>${rowsHtml}</tbody></table></div></div>`;
 
-  // verdict only when cap display is ON; neutral while the vote is open
+  // verdict only when cap display is ON
   let verdict = "";
   if(SHOW_CAP && anyAsset){
     const overTeams = teams.filter(t => (t.total - (out[t.roster_id]||0) + (inc[t.roster_id]||0)) > CAP);
     verdict = overTeams.length
-      ? `<div class="verdict bad">Over cap: ${overTeams.map(t=>esc(t.owner)).join(", ")} would exceed $${CAP}.</div>`
-      : `<div class="verdict ok">All teams fit under $${CAP}.</div>`;
+      ? `<p class="verdict bs-down">Over cap: ${overTeams.map(t=>esc(t.owner)).join(", ")}</p>`
+      : `<p class="verdict bs-up">All teams under $${CAP}</p>`;
   }
-
-  const swapNote = SHOW_CAP
-    ? `Salary travels with the player. Draft picks move at $0 and never count toward the cap. Cap = $${CAP}.`
-    : `Salary travels with the player. Draft picks move at $0. Showing total value only while the league cap vote is open.`;
 
   // ---- screenshot-ready summary (display only; reuses the salaries already computed) ----
   let summaryHtml = "";
@@ -1124,7 +1051,7 @@ function renderTradeResult(){
       if(gets[a.toRid]) gets[a.toRid].push(item);
     }
     const dateStr = new Date().toLocaleDateString(undefined, {month:"short", day:"numeric", year:"numeric"});
-    const assetLine = it => `${esc(it.label)} <span class="ts-amt">$${it.amt}</span>`;
+    const assetLine = it => `<span>${esc(it.label)}</span> <span class="ts-amt">$${it.amt}</span>`;
     const sumOf = arr => arr.reduce((s,x)=>s+x.amt,0);
 
     const teamBlocks = teams.map(t => {
@@ -1137,11 +1064,11 @@ function renderTradeResult(){
       const afterBits = SHOW_CAP
         ? `$${t.total} → <b class="${over?'ts-over':''}">$${proj}</b> / ${CAP} · ${room<0?`<b class="ts-over">$${Math.abs(room)} over</b>`:`$${room} room`}`
         : `$${t.total} → <b>$${proj}</b>`;
-      return `<div class="ts-team ${over?'over':''}">
+      return `<div class="ts-team">
         <div class="ts-tname">${avatarImg(t,"ts-av")}${esc(t.owner)}</div>
         <div class="ts-cols">
-          <div class="ts-col"><div class="ts-h gives">Gives</div>${list(g,"—")}</div>
-          <div class="ts-col"><div class="ts-h gets">Gets</div>${list(r,"—")}</div>
+          <div class="ts-col"><div class="bs-micro gives">Gives</div>${list(g,"—")}</div>
+          <div class="ts-col"><div class="bs-micro gets">Gets</div>${list(r,"—")}</div>
         </div>
         <div class="ts-after">${afterBits}</div>
       </div>`;
@@ -1151,34 +1078,29 @@ function renderTradeResult(){
     if(SHOW_CAP){
       const overTeams = teams.filter(t => (t.total - sumOf(gives[t.roster_id]||[]) + sumOf(gets[t.roster_id]||[])) > CAP);
       vLine = overTeams.length
-        ? `<div class="ts-verdict bad">✗ ${overTeams.map(t=>esc(t.owner)).join(", ")} over $${CAP}</div>`
-        : `<div class="ts-verdict ok">✓ All teams under $${CAP}</div>`;
+        ? `<p class="ts-verdict bs-down">${overTeams.map(t=>esc(t.owner)).join(", ")} over $${CAP}</p>`
+        : `<p class="ts-verdict bs-up">All teams under $${CAP}</p>`;
     }
 
-    summaryHtml = `<div class="ts-card" id="tradeSummary">
-      <div class="ts-head"><span class="ts-title">Busch Apple Trade</span><span class="ts-date">${esc(dateStr)}</span></div>
+    summaryHtml = `<section class="bs-panel ts-card" id="tradeSummary" aria-label="Trade summary">
+      <div class="bs-panel-head ts-head"><span class="ts-title">Busch Apple Trade</span><span class="ts-date">${esc(dateStr)}</span></div>
       <div class="ts-teams">${teamBlocks}</div>
       ${vLine}
-      <div class="ts-foot">Salaries via the league's audited resolver · picks $0${SHOW_CAP?` · cap $${CAP}`:""}</div>
-    </div>
-    <div class="ts-actions"><button class="btn sm" id="copyTradeBtn">Copy summary</button><span class="status" id="copyMsg"></span></div>`;
+      <p class="ts-foot">Salaries via the league's audited resolver · picks $0${SHOW_CAP?` · cap $${CAP}`:""}</p>
+    </section>
+    <div class="ts-actions"><button type="button" class="bs-btn" id="copyTradeBtn">Copy summary</button><button type="button" class="bs-btn" id="copyLinkBtn">Copy link</button><span class="copy-msg" id="copyMsg" role="status"></span></div>`;
   }
 
-  box.innerHTML = `<div class="result">
-    <div class="rcols">${cards}</div>
-    ${verdict}
-    <div class="swap-note">${swapNote}</div>
-    ${summaryHtml}
-  </div>`;
+  box.innerHTML = `<div class="result">${table}${verdict}${summaryHtml}</div>`;
 
-  // wire copy-to-clipboard (plain-text version for pasting into chat)
+  // wire copy-to-clipboard (plain-text summary for chat, or the shareable link)
+  const copyMsg = txt => { const m = document.getElementById("copyMsg"); if(m){ m.textContent = txt; if(txt === "Copied") setTimeout(()=>{ m.textContent=""; }, 1800); } };
+  const copy = txt => (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject())
+    .then(() => copyMsg("Copied")).catch(() => copyMsg("Copy failed — long-press to select."));
   const copyBtn = document.getElementById("copyTradeBtn");
-  if(copyBtn) copyBtn.addEventListener("click", () => {
-    const txt = buildTradeText(teams, out, inc);
-    (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject())
-      .then(()=>{ const m=document.getElementById("copyMsg"); if(m){ m.textContent="Copied!"; setTimeout(()=>m.textContent="",1800); } })
-      .catch(()=>{ const m=document.getElementById("copyMsg"); if(m) m.textContent="Copy failed — long-press to select."; });
-  });
+  if(copyBtn) copyBtn.addEventListener("click", () => copy(buildTradeText(teams, out, inc)));
+  const linkBtn = document.getElementById("copyLinkBtn");
+  if(linkBtn) linkBtn.addEventListener("click", () => copy(location.href));
 }
 
 // plain-text trade summary for the clipboard (mirrors the visual summary)
@@ -1205,45 +1127,158 @@ function buildTradeText(teams){
                         : `  Total: $${t.total} -> $${proj}`);
     lines.push("");
   });
-  if(SHOW_CAP) lines.push(anyOver ? `Result: OVER CAP` : `Result: all teams under $${CAP} ✓`);
+  if(SHOW_CAP) lines.push(anyOver ? `Result: OVER CAP` : `Result: all teams under $${CAP}`);
   return lines.join("\n").trim();
 }
 
+/* ============================ URL-HASH STATE ============================ */
+// #grid[/table|cards|chart][/<rid>][/color-owner|color-none] · #teams[/all|/3.7.9] · #trade[/3.7[/p4046~7,k2027-1-3~3]]
+// From-team ownership is always derived from live rosters, never trusted from the URL.
+function applyHash(raw){
+  let h = String(raw || "").replace(/^#/, "");
+  try{ h = decodeURIComponent(h); }catch(e){}
+  const seg = h.split("/");
+  const tab = PANE[(seg[0]||"").toLowerCase()] ? seg[0].toLowerCase() : "grid";
+  const rest = h.length > 1500 ? [] : seg.slice(1);
+  const ridOk = s => /^\d{1,2}$/.test(s) && !!teamByRid(Number(s));
+  if(tab === "grid"){
+    for(const s0 of rest){ const s = s0.toLowerCase();
+      if(s === "table" || s === "cards" || s === "chart") GRID_VIEW = s;
+      else if(/^color-(position|owner|none)$/.test(s)) GRID_COLOR = s.slice(6);
+      else if(ridOk(s)) GRID_CHART_TEAM = Number(s);
+    }
+  } else if(tab === "teams" && TEAMS.length){
+    const s = (rest[0] || "").toLowerCase();
+    SELECTED.clear();
+    if(s === "all") SELECTED.add("__ALL__");
+    else s.split(".").filter(ridOk).map(Number).forEach(id => { if(SELECTED.size < 4) SELECTED.add(id); });
+  } else if(tab === "trade" && TEAMS.length){
+    const ids = [];
+    (rest[0] || "").split(".").filter(ridOk).map(Number).forEach(id => { if(!ids.includes(id) && ids.length < 10) ids.push(id); });
+    TRADE_TEAMS = ids;
+    TRADE_ASSETS.clear();
+    let dropped = 0, droppedPicks = 0;
+    for(const tok of (rest[1] || "").split(",").filter(Boolean)){
+      let m;
+      if((m = /^p([0-9A-Za-z]{1,8})~(\d{1,2})$/.exec(tok))){
+        const pid = m[1], toRid = Number(m[2]);
+        const from = TEAMS.find(t => t.players.some(p => p.pid === pid));
+        if(!from || !TRADE_TEAMS.includes(from.roster_id)){ dropped++; continue; }
+        const p = from.players.find(x => x.pid === pid);
+        TRADE_ASSETS.set(assetKindKey("p", pid), { fromRid:from.roster_id, toRid, kind:"player", amt:p.amt, label:p.name });
+      } else if((m = /^k(\d{4}-[1-3]-\d{1,2})~(\d{1,2})$/.exec(tok))){
+        const ykey = m[1], toRid = Number(m[2]);
+        const from = TEAMS.find(t => t.picks.some(pk => pk.ykey === ykey));
+        if(!from || !TRADE_TEAMS.includes(from.roster_id)){ dropped++; droppedPicks++; continue; }
+        const pk = from.picks.find(x => x.ykey === ykey);
+        TRADE_ASSETS.set(`k:${from.roster_id}:${ykey}`, { fromRid:from.roster_id, toRid, kind:"pick", amt:0, label:pk.label });
+      }   // any other token is malformed: dropped silently
+    }
+    reconcileDestinations();   // resets a to-team that is not in the trade or equals the from-team
+    const noun = droppedPicks === dropped ? "pick" : droppedPicks ? "asset" : "player";
+    HASH_NOTE = dropped ? `${dropped} ${noun}${dropped===1?"":"s"} from the link ${dropped===1?"is":"are"} no longer on that roster.` : "";
+  }
+  selectTab(tab);
+}
+function hashString(){
+  if(ACTIVE_TAB === "teams"){
+    if(SELECTED.has("__ALL__")) return "teams/all";
+    return SELECTED.size ? "teams/" + [...SELECTED].join(".") : "teams";
+  }
+  if(ACTIVE_TAB === "trade"){
+    if(!TRADE_TEAMS.length) return "trade";
+    const toks = [];
+    for(const [k,a] of TRADE_ASSETS){
+      if(a.toRid == null) continue;
+      toks.push(a.kind === "player" ? `p${k.slice(2)}~${a.toRid}` : `k${k.split(":")[2]}~${a.toRid}`);
+    }
+    return "trade/" + TRADE_TEAMS.join(".") + (toks.length ? "/" + toks.join(",") : "");
+  }
+  let h = "grid/" + GRID_VIEW;
+  if(GRID_VIEW === "chart"){ if(GRID_CHART_TEAM != null) h += "/" + GRID_CHART_TEAM; }
+  else if(GRID_COLOR !== "position") h += "/color-" + GRID_COLOR;
+  return h;
+}
+function writeHash(){
+  try{
+    if(!TEAMS.length && HASH_PENDING) return;      // keep a shared-link hash until the first load applies it
+    const h = hashString();
+    if(location.hash.replace(/^#/, "") !== h) history.replaceState(null, "", "#" + h);
+    LAST_HASH = h;
+  }catch(e){}
+}
+
+/* ============================ TABS ============================ */
+// tablist: the #tabs element (ARIA tablist); onSelect(key) paints + writes the hash. Buttons carry data-key.
+function wireTabs(tablist, onSelect){
+  const tabs=[...tablist.querySelectorAll('[role="tab"]')];
+  tabs.forEach((t,i)=>{
+    t.addEventListener("click",()=>onSelect(t.dataset.key));
+    t.addEventListener("keydown",e=>{ let j=null;
+      if(e.key==="ArrowRight") j=(i+1)%tabs.length; else if(e.key==="ArrowLeft") j=(i-1+tabs.length)%tabs.length;
+      else if(e.key==="Home") j=0; else if(e.key==="End") j=tabs.length-1;
+      if(j!==null){ e.preventDefault(); tabs[j].focus(); onSelect(tabs[j].dataset.key); } });
+  });
+}
+function setSelectedTab(tablist, key){ tablist.querySelectorAll('[role="tab"]').forEach(t=>{ const on=t.dataset.key===key;
+  t.setAttribute("aria-selected", on?"true":"false"); t.tabIndex = on?0:-1; }); }
+const TABLIST = document.getElementById("tabs");
+function selectTab(key){
+  if(!PANE[key]) key = "grid";
+  ACTIVE_TAB = key;
+  for(const k in PANE) document.getElementById("pane-" + PANE[k]).classList.toggle("hide", k !== key);
+  setSelectedTab(TABLIST, key);
+  writeHash();
+}
+wireTabs(TABLIST, selectTab);
+
 // ---- load + paint ----
+const START_HASH = location.hash.replace(/^#/, "");
 async function load(){
   const status = document.getElementById("status");
   const errbox = document.getElementById("errbox");
-  errbox.innerHTML = ""; status.textContent = "Pulling live data…";
+  errbox.innerHTML = ""; status.textContent = "Sleeper · loading…";
   try{
     TEAMS = await buildSalaries();
     // reconcile trade against fresh data
     TRADE_TEAMS = TRADE_TEAMS.filter(rid => teamByRid(rid));
     for(const [k,a] of [...TRADE_ASSETS]) if(!teamByRid(a.fromRid)) TRADE_ASSETS.delete(k);
     reconcileDestinations();
-    document.getElementById("sub").textContent = `${TEAMS.length} teams · season ${SEASON}`;
+    if(HASH_PENDING){ applyHash(START_HASH); HASH_PENDING = false; }   // first successful load: resolve link ids
+    document.getElementById("sub").textContent = `Salary & trade tool · ${TEAMS.length} teams · ${SEASON}${SHOW_CAP?` · cap $${CAP}`:""}`;
     paintTable(); paintGrid(); paintTrade();
-    status.textContent = `Updated ${new Date().toLocaleTimeString()}`;
-    document.getElementById("foot").innerHTML = SHOW_CAP
-      ? `Live from the public Sleeper API on each load. Cap $${CAP}. Picks are $0 and never count toward the cap. No fair/unfair judgment — just the numbers.`
-      : `Live from the public Sleeper API on each load. Showing total value only while the league cap vote is open. Picks are $0. No fair/unfair judgment — just the numbers.`;
+    status.textContent = `Sleeper · updated ${new Date().toLocaleTimeString([], {hour:"numeric", minute:"2-digit"})}`;
   }catch(e){
-    errbox.innerHTML = `<div class="err">Couldn't load: ${esc(e.message)}. Try Refresh.</div>`;
-    status.textContent = "";
+    errbox.innerHTML = `<div class="err" role="alert">Couldn't load: ${esc(e.message)}. Try Refresh.</div>`;
+    status.textContent = "Sleeper · couldn't update";
   }
 }
 
-// ---- tabs ----
-document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
-  ACTIVE_TAB = t.dataset.tab;
-  document.querySelectorAll(".tab").forEach(x => x.classList.toggle("active", x===t));
-  document.getElementById("pane-table").classList.toggle("hide", ACTIVE_TAB!=="table");
-  document.getElementById("pane-grid").classList.toggle("hide", ACTIVE_TAB!=="grid");
-  document.getElementById("pane-trade").classList.toggle("hide", ACTIVE_TAB!=="trade");
-}));
 document.getElementById("refreshBtn").addEventListener("click", load);
 document.getElementById("autoRefresh").addEventListener("change", e => {
   if(e.target.checked){ AUTO = setInterval(load, 60000); } else { clearInterval(AUTO); AUTO = null; }
 });
+window.addEventListener("hashchange", () => {
+  const h = location.hash.replace(/^#/, "");
+  if(h === LAST_HASH) return;
+  applyHash(h);
+  if(TEAMS.length){ paintTable(); paintGrid(); paintTrade(); }
+});
+
+// ---- theme: System -> Light -> Dark (localStorage "bs-theme") ----
+// theme-color metas follow the OS via media=; a manual choice overrides both so the browser chrome matches (review N7).
+const TC_META=[...document.querySelectorAll('meta[name="theme-color"]')], TC_ORIG=TC_META.map(x=>x.content), TC_BG={light:"#F5F6F8",dark:"#0E1116"};
+function applyTheme(m){ const r=document.documentElement; if(m==="light"||m==="dark") r.setAttribute("data-theme",m); else r.removeAttribute("data-theme");
+  TC_META.forEach((x,i)=>{ x.content = TC_BG[m] || TC_ORIG[i]; });
+  try{ m==="system"?localStorage.removeItem("bs-theme"):localStorage.setItem("bs-theme",m); }catch(e){}
+  const b=document.getElementById("themeBtn"); if(b){ b.textContent="Theme: "+m[0].toUpperCase()+m.slice(1); b.setAttribute("aria-label","Color theme: "+m+". Activate to change."); } }
+function currentTheme(){ return document.documentElement.getAttribute("data-theme")||"system"; }
+document.getElementById("themeBtn").addEventListener("click",()=>{ const o=["system","light","dark"]; applyTheme(o[(o.indexOf(currentTheme())+1)%3]); });
+applyTheme(currentTheme());
+
+// start-up: apply the tab / grid view / color from a link now; ids that need TEAMS resolve on the first load
+HASH_PENDING = !!START_HASH;
+applyHash(START_HASH);
 
 load();
 </script>
