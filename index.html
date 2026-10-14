@@ -503,17 +503,25 @@ async function buildSalaries(){
   PLAYERS = players;
   const uById = {}; users.forEach(u => uById[u.user_id] = u);
 
-  const auc = {};
+  // Parallel fetch (2026-10 redesign): all draft-pick and transaction-week requests go out at once, then the
+  // results are consumed in the SAME order as the old serial loops (auctions by start_time, rookies in drafts
+  // order, weeks 1 -> 18), so auc overwrites and faabAdds push order are identical. Dollar logic unchanged.
   const auctions = drafts.filter(d => d.type === "auction").sort((a,b) => (a.start_time||0) - (b.start_time||0));
-  for(const d of auctions){
-    const picks = await j(`${API}/draft/${d.draft_id}/picks`);
+  const rookies  = drafts.filter(d => d.type !== "auction");
+  const WEEKS = Array.from({length:18}, (_,i) => i+1);
+  const [aucPicks, rookPicks, txnsByWeek] = await Promise.all([
+    Promise.all(auctions.map(d => j(`${API}/draft/${d.draft_id}/picks`))),          // fail = whole load fails (same as before)
+    Promise.all(rookies.map(d => j(`${API}/draft/${d.draft_id}/picks`))),           // fail = whole load fails (same as before)
+    Promise.all(WEEKS.map(wk => j(`${API}/league/${LEAGUE_ID}/transactions/${wk}`).catch(() => null))), // per-week skip (same as the old continue)
+  ]);
+  const auc = {};
+  aucPicks.forEach(picks => {
     for(const p of picks){ const a = p.metadata && p.metadata.amount; if(p.player_id != null && a != null) auc[String(p.player_id)] = Number(a); }
-  }
+  });
   const rook = {};
-  for(const d of drafts.filter(d => d.type !== "auction")){
-    const picks = await j(`${API}/draft/${d.draft_id}/picks`);
+  rookPicks.forEach(picks => {
     for(const p of picks){ const s = `${p.round}.${String(p.draft_slot).padStart(2,"0")}`; if(p.player_id != null && ROOKIE_SCALE[s] != null) rook[String(p.player_id)] = ROOKIE_SCALE[s]; }
-  }
+  });
   // FAAB (owner-aware fix): a waiver bid must only apply to the roster that MADE that claim, and the
   // LATEST claim wins. Sleeper `x.adds` = { player_id: roster_id_that_added }. We record every completed
   // FAAB add as {toRosterId, bid, ts} keyed by player, using the REAL ms timestamp (status_updated, else
@@ -521,9 +529,8 @@ async function buildSalaries(){
   // claimed, dropped, and re-claimed by a different owner. The resolver then picks the most-recent bid
   // whose toRosterId === the roster that CURRENTLY holds the player (so a prior owner's price can't leak).
   const faabAdds = {};   // pid -> [{toRosterId, bid, ts}]
-  for(let wk=1; wk<=18; wk++){
-    let txns = [];
-    try{ txns = await j(`${API}/league/${LEAGUE_ID}/transactions/${wk}`); }catch(e){ continue; }
+  txnsByWeek.forEach(txns => {
+    if(txns == null) return;
     for(const x of (txns||[])){
       if(x.status !== "complete") continue;
       const bid = x.settings && x.settings.waiver_bid;
@@ -538,19 +545,7 @@ async function buildSalaries(){
         }
       }
     }
-  }
-  // resolver — OWNER-AWARE. Priority: the CURRENT owner's most-recent FAAB claim (if they claimed the
-  // player off waivers) -> auction price -> rookie scale -> $1 floor.
-  // WHY FAAB IS CHECKED FIRST: a FAAB claim is a RE-ACQUISITION that resets the price to the winning bid.
-  // The reported bug (Ricky Pearsall) was Charlie auction-drafting him at $13, DROPPING him, then Chay
-  // claiming him for $2 — the old resolver checked auction FIRST, so it returned Charlie's stale $13 for
-  // Chay. Because the auction map is player-keyed (owner-blind), checking it first leaks a prior owner's
-  // price onto whoever claimed the player later. Checking the current owner's own FAAB claim first fixes
-  // that: Chay's $2 wins. Players who never FAAB-claimed (auction-drafted or TRADED in) have no bid for
-  // the current roster, so faabBidFor()=null and they correctly fall through to auction/rookie/$1 —
-  // i.e. salary still TRAVELS WITH THE PLAYER on trades, per the league rule. (Confirmed live: this also
-  // corrects Keon Coleman $1->$12 Nick, Jaylen Wright $2->$30 Henry, Marcus Mariota $1->$2 Ajay — each
-  // now shows the current owner's actual winning bid instead of a stale/overwritten one.)
+  });
   // T3-3 RULE (owner, 2026-10-09): a dropped player has NO salary. Whoever picks him up next pays their winning
   // FAAB bid (waiver claim) or $1 (a normal free-agent pickup). A trade carries the salary unchanged.
   // So we replay the player's add events oldest -> newest starting from the auction/rookie price:
