@@ -14,6 +14,15 @@
 <link rel="stylesheet" href="assets/family.css?v=1.0.3">
 <style>
   :root{--accent:#D0503C;--accent-text-dark:#E8705E;--accent-text-light:#A93A28}
+  /* OWNER OVERRIDE (2026-10-13): Busch keeps its production position hues (QB orange, RB green, WR blue, TE purple,
+     K grey, DEF red, DL pink, LB cyan, DB lime). Dark = production values; light = darker shades of the same hue for
+     >=4.5:1 text on white. --oc-mix = how much of an owner color survives when it is used as TEXT (rest = --text). */
+  :root{--pos-qb:#F0913E;--pos-rb:#33E08A;--pos-wr:#4AA8FF;--pos-te:#B878FF;--pos-k:#95A5A6;
+        --pos-def:#FF6060;--pos-dl:#E0679A;--pos-lb:#67C7E0;--pos-db:#C7E067;--oc-mix:65%}
+  :root[data-theme="light"]{--pos-qb:#B3590F;--pos-rb:#187A4F;--pos-wr:#1F6FBF;--pos-te:#7B3FC4;--pos-k:#5E6673;
+        --pos-def:#C23B44;--pos-dl:#A8467A;--pos-lb:#17707F;--pos-db:#5F6D18;--oc-mix:40%}
+  @media (prefers-color-scheme:light){ :root:not([data-theme="dark"]){--pos-qb:#B3590F;--pos-rb:#187A4F;--pos-wr:#1F6FBF;--pos-te:#7B3FC4;--pos-k:#5E6673;
+        --pos-def:#C23B44;--pos-dl:#A8467A;--pos-lb:#17707F;--pos-db:#5F6D18;--oc-mix:40%} }
 
   .wrap{max-width:1120px;margin:0 auto;padding:0 var(--sp-4) var(--sp-6)}
 
@@ -95,6 +104,12 @@
   .pt-team{color:var(--text-2);font-size:11px}
   .pt-own{color:var(--text-2);font-size:11px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .pt-sal{margin-top:var(--sp-1);font:600 var(--fs-card)/1 var(--font-display);font-variant-numeric:tabular-nums}
+  /* Color: Owner + Position (default, = production): position-tinted fill + owner-colored frame + owner-colored name */
+  .ptile.tint{--pc:var(--pos-k);background:var(--surface);background:color-mix(in srgb,var(--pc) 15%,var(--surface));
+    border-color:var(--oc,var(--border));box-shadow:inset 0 0 0 2px var(--oc,transparent)}
+  .ptile.tint-QB{--pc:var(--pos-qb)} .ptile.tint-RB{--pc:var(--pos-rb)} .ptile.tint-WR{--pc:var(--pos-wr)} .ptile.tint-TE{--pc:var(--pos-te)}
+  .ptile.tint-K{--pc:var(--pos-k)} .ptile.tint-DEF{--pc:var(--pos-def)} .ptile.tint-DL{--pc:var(--pos-dl)} .ptile.tint-LB{--pc:var(--pos-lb)} .ptile.tint-DB{--pc:var(--pos-db)}
+  .oc-text{color:var(--oc);color:color-mix(in srgb,var(--oc) var(--oc-mix),var(--text));font-weight:600}
   @media(max-width:480px){
     .card-grid{grid-template-columns:repeat(3,1fr);gap:var(--sp-1)}
     .ptile{padding:var(--sp-1)}
@@ -233,13 +248,14 @@ const OWNER = {
   rearmostzeus:"Zach", Nyquilbandit:"Henry", Sdljunce:"Seth", ChayDyck:"Chay", RileyHeid13:"Riley",
   JunceBoxes:"Nick", charliehorejsi:"Charlie", TheZynBandit:"Bobby", DaBigDyck:"Ajay", BigBomboclaat69:"Jonah"
 };
-// Muted categorical color per fantasy manager (keyed by display name). Used ONLY as a 3px bar / legend swatch
-// (Salary Grid "Color: Owner"), never as text; the owner name is always shown as text too.
+// Stable color per fantasy manager (keyed by display name) = the PRODUCTION palette (owner override 2026-10-13).
+// Used as the card frame, the 3px bar and the legend swatch at full strength; as TEXT it goes through .oc-text,
+// which mixes it toward --text per theme (--oc-mix) for contrast while keeping the same hue.
 const OWNER_COLORS = {
-  Zach:"#4E79A7", Henry:"#F28E2B", Seth:"#76B7B2", Chay:"#B07AA1", Riley:"#E15759",
-  Nick:"#59A14F", Charlie:"#EDC948", Bobby:"#9C755F", Ajay:"#FF9DA7", Jonah:"#BAB0AC"
+  Zach:"#ff3b6b", Henry:"#ffd23f", Seth:"#00d1b2", Chay:"#8b5cf6", Riley:"#ff8c3b",
+  Nick:"#17b2ff", Charlie:"#e879f9", Bobby:"#7cff5c", Ajay:"#ff5ce1", Jonah:"#5c7cff"
 };
-function ownerColor(name){ return OWNER_COLORS[name] || "#8C95A3"; }
+function ownerColor(name){ return OWNER_COLORS[name] || "#9aa6b4"; }
 const POS_ORDER = ["QB","RB","WR","TE","K","DEF","DL","LB","DB"];
 
 // ---- state ----
@@ -467,13 +483,13 @@ async function buildSalaries(){
 }
 
 // ---- UI state added by the 2026-10 redesign (presentation only; no salary data) ----
-let GRID_COLOR = "position";    // Salary Grid color mode: "position" | "owner" | "none" (hash wins over localStorage)
+let GRID_COLOR = "both";        // Salary Grid color mode: "both" (default = production owner + position coloring) | "position" | "owner" | "none" (hash wins over localStorage)
 const TEAMS_SORT = { key:"room", dir:-1 };   // Teams cap table sort (memory only); room/-1 = over-cap first, then most room
 const PANE = { teams:"table", grid:"grid", trade:"trade" };  // hash key -> pane id suffix
 let HASH_PENDING = false;       // a start-up link hash is waiting for TEAMS before it can be fully applied
 let LAST_HASH = null;           // last hash written/applied (hashchange ignores our own writes)
 let HASH_NOTE = "";             // one-line note when shared-link trade assets were dropped
-try{ const c = localStorage.getItem("busch-grid-color"); if(c==="position"||c==="owner"||c==="none") GRID_COLOR = c; }catch(e){}
+try{ const c = localStorage.getItem("busch-grid-color"); if(c==="both"||c==="position"||c==="owner"||c==="none") GRID_COLOR = c; }catch(e){}
 
 // ---- Teams tab: sort/filter ----
 function sortedFilteredPlayers(t){
@@ -676,8 +692,9 @@ function segGroup(items, cur, attr, label){
     `<button type="button" data-${attr}="${v}" aria-pressed="${cur===v?"true":"false"}">${l}</button>`).join("") + `</div>`;
 }
 // 3px left bar on the first cell / tile: position color, owner color, or none
+// (table "both" = position bar; cards "both" = tinted tile + owner frame, see tileAttrs)
 function colorBar(r){
-  if(GRID_COLOR === "position") return ` data-posbar="${esc(r.pos)}"`;
+  if(GRID_COLOR === "position" || GRID_COLOR === "both") return ` data-posbar="${esc(r.pos)}"`;
   if(GRID_COLOR === "owner") return ` data-posbar="" style="--bar:${ownerColor(r.owner)}"`;
   return "";
 }
@@ -717,7 +734,7 @@ function paintGridInner(){
   // view toggle (Table / Cards / Chart): same filtered+sorted rows, only the render branches
   const viewToggle = segGroup([["table","Table"],["cards","Cards"],["chart","By Position $"]], GRID_VIEW, "view", "Grid view");
   const colorToggle = `<span class="seg-wrap"><span class="seg-lab" aria-hidden="true">Color:</span>`
-    + segGroup([["position","Position"],["owner","Owner"],["none","None"]], GRID_COLOR, "color", "Color by") + `</span>`;
+    + segGroup([["both","Both"],["position","Position"],["owner","Owner"],["none","None"]], GRID_COLOR, "color", "Color by") + `</span>`;
 
   // sort dropdown (primary control for Cards view, which has no clickable headers; also usable in Table)
   const sortDefs = [["amt","Salary"],["pos","Position"],["team","NFL team"],["owner","Fantasy team"],["name","Player name"]];
@@ -773,14 +790,19 @@ function paintGridInner(){
 
   let view;
   if(GRID_VIEW === "cards"){
-    // dense neutral tiles; auto-fill grid flows left->right then wraps down (reading order)
-    view = `<div class="card-grid">` + rows.map(r => `<div class="ptile"${colorBar(r)}>
+    // dense tiles; auto-fill grid flows left->right then wraps down (reading order).
+    // "both" (default, = production): position-tinted fill + owner-colored frame + owner-colored name.
+    const both = GRID_COLOR === "both";
+    const posTxt = both || GRID_COLOR === "position";
+    view = `<div class="card-grid">` + rows.map(r => { const oc = ownerColor(r.owner);
+      const attrs = both ? ` class="ptile tint tint-${esc(r.pos)}" style="--oc:${oc}"` : ` class="ptile"${colorBar(r)}`;
+      return `<div${attrs}>
       <div class="pt-face">${playerImg(r._p)}</div>
       <div class="pt-name">${esc(r.name)}</div>
-      <div class="pt-meta"><span class="pt-pos${GRID_COLOR==="position"?` pos-${esc(r.pos)}`:""}">${esc(r.pos)}</span><span class="pt-team">${r.team?esc(r.team):"FA"}</span></div>
-      <div class="pt-own">${esc(r.owner)}</div>
+      <div class="pt-meta"><span class="pt-pos${posTxt?` pos-${esc(r.pos)}`:""}">${esc(r.pos)}</span><span class="pt-team">${r.team?esc(r.team):"FA"}</span></div>
+      <div class="pt-own${both?" oc-text":""}"${both?` style="--oc:${oc}"`:""}>${esc(r.owner)}</div>
       <div class="pt-sal">$${r.amt}</div>
-    </div>`).join("") + `</div>`;
+    </div>`; }).join("") + `</div>`;
   } else {
     const th = (col, label, cls) => {
       const on = GRID_SORT === col;
@@ -790,16 +812,16 @@ function paintGridInner(){
     const head = `<thead><tr>${th("name","Player")}${th("pos","Pos")}${th("team","NFL")}${th("owner","Owner")}${th("amt","Salary","num")}</tr></thead>`;
     const body = `<tbody>` + rows.map(r => `<tr>
       <td${colorBar(r)}><span class="cell-flex">${playerImg(r._p)}<span class="g-pname">${esc(r.name)}</span></span></td>
-      <td><span class="gpos${GRID_COLOR==="position"?` pos-${esc(r.pos)}`:""}">${esc(r.pos)}</span></td>
+      <td><span class="gpos${(GRID_COLOR==="position"||GRID_COLOR==="both")?` pos-${esc(r.pos)}`:""}">${esc(r.pos)}</span></td>
       <td>${r.team ? esc(r.team) : '<span class="bs-dim">FA</span>'}</td>
-      <td class="bs-dim">${esc(r.owner)}</td>
+      ${GRID_COLOR==="both" ? `<td class="oc-text" style="--oc:${ownerColor(r.owner)}">${esc(r.owner)}</td>` : `<td class="bs-dim">${esc(r.owner)}</td>`}
       <td class="num">$${r.amt}</td>
     </tr>`).join("") + `</tbody>`;
     view = `<div class="bs-panel"><div class="bs-table-wrap bs-table-wrap--tall"><table class="bs-table bs-table--stick1">${head}${body}</table></div></div>`;
   }
 
   // owner-color legend (Color: Owner) so the bars are decodable; league order, compact
-  const ownerLegend = GRID_COLOR==="owner"
+  const ownerLegend = (GRID_COLOR==="owner" || GRID_COLOR==="both")
     ? `<div class="owner-legend" aria-label="Owner colors">` + TEAMS.map(t => {
         const oc = ownerColor(t.owner);
         return `<span class="ol-item"><span class="ol-sw" style="background:${oc}"></span>${esc(t.owner)}</span>`;
@@ -1144,7 +1166,7 @@ function applyHash(raw){
   if(tab === "grid"){
     for(const s0 of rest){ const s = s0.toLowerCase();
       if(s === "table" || s === "cards" || s === "chart") GRID_VIEW = s;
-      else if(/^color-(position|owner|none)$/.test(s)) GRID_COLOR = s.slice(6);
+      else if(/^color-(both|position|owner|none)$/.test(s)) GRID_COLOR = s.slice(6);
       else if(ridOk(s)) GRID_CHART_TEAM = Number(s);
     }
   } else if(tab === "teams" && TEAMS.length){
@@ -1196,7 +1218,7 @@ function hashString(){
   }
   let h = "grid/" + GRID_VIEW;
   if(GRID_VIEW === "chart"){ if(GRID_CHART_TEAM != null) h += "/" + GRID_CHART_TEAM; }
-  else if(GRID_COLOR !== "position") h += "/color-" + GRID_COLOR;
+  else if(GRID_COLOR !== "both") h += "/color-" + GRID_COLOR;
   return h;
 }
 function writeHash(){
