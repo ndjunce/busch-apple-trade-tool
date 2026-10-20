@@ -260,6 +260,8 @@ const POS_ORDER = ["QB","RB","WR","TE","K","DEF","DL","LB","DB"];
 
 // ---- state ----
 let TEAMS = [];          // [{roster_id, owner, sn, avatar, players:[...], picks:[{year,round,label,key,fromRid}], total, room}]
+let DATA_READY = false;  // cap results require a complete successful refresh
+let LOADING = false;
 let PLAYERS = null;
 let AUTO = null;
 let ACTIVE_TAB = "grid";        // hash key: "teams" | "grid" | "trade"; Salary Grid is the landing view
@@ -281,6 +283,7 @@ const TRADE_UI = {};            // roster_id -> {q, fpos}
 const TRADE_ASSETS = new Map();
 
 async function j(url){ const r = await fetch(url, {cache:"no-store"}); if(!r.ok) throw new Error(`${r.status} ${url.split("/v1/")[1]||url}`); return r.json(); }
+async function list(url){ const data = await j(url); if(!Array.isArray(data)) throw new Error(`Invalid list: ${url.split("/v1/")[1]||url}`); return data; }
 function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function teamByRid(rid){ return TEAMS.find(t => t.roster_id === rid) || null; }
 function ownerNameOfRid(rid){ const t = teamByRid(rid); return t ? t.owner : `#${rid}`; }
@@ -394,10 +397,10 @@ function buildPicksByRoster(rosterIds, tradedPicks){
 // ---- build salaries + picks from live Sleeper (dollar logic identical to v1) ----
 async function buildSalaries(){
   const [rosters, users, drafts, tradedPicks, players] = await Promise.all([
-    j(`${API}/league/${LEAGUE_ID}/rosters`),
-    j(`${API}/league/${LEAGUE_ID}/users`),
-    j(`${API}/league/${LEAGUE_ID}/drafts`),
-    j(`${API}/league/${LEAGUE_ID}/traded_picks`).catch(() => []),
+    list(`${API}/league/${LEAGUE_ID}/rosters`),
+    list(`${API}/league/${LEAGUE_ID}/users`),
+    list(`${API}/league/${LEAGUE_ID}/drafts`),
+    list(`${API}/league/${LEAGUE_ID}/traded_picks`),
     loadPlayers(),
   ]);
   PLAYERS = players;
@@ -410,9 +413,9 @@ async function buildSalaries(){
   const rookies  = drafts.filter(d => d.type !== "auction");
   const WEEKS = Array.from({length:18}, (_,i) => i+1);
   const [aucPicks, rookPicks, txnsByWeek] = await Promise.all([
-    Promise.all(auctions.map(d => j(`${API}/draft/${d.draft_id}/picks`))),          // fail = whole load fails (same as before)
-    Promise.all(rookies.map(d => j(`${API}/draft/${d.draft_id}/picks`))),           // fail = whole load fails (same as before)
-    Promise.all(WEEKS.map(wk => j(`${API}/league/${LEAGUE_ID}/transactions/${wk}`).catch(() => null))), // per-week skip (same as the old continue)
+    Promise.all(auctions.map(d => list(`${API}/draft/${d.draft_id}/picks`))),
+    Promise.all(rookies.map(d => list(`${API}/draft/${d.draft_id}/picks`))),
+    Promise.all(WEEKS.map(wk => list(`${API}/league/${LEAGUE_ID}/transactions/${wk}`))), // missing history must not become a salary estimate
   ]);
   const auc = {};
   aucPicks.forEach(picks => {
@@ -422,15 +425,10 @@ async function buildSalaries(){
   rookPicks.forEach(picks => {
     for(const p of picks){ const s = `${p.round}.${String(p.draft_slot).padStart(2,"0")}`; if(p.player_id != null && ROOKIE_SCALE[s] != null) rook[String(p.player_id)] = ROOKIE_SCALE[s]; }
   });
-  // FAAB (owner-aware fix): a waiver bid must only apply to the roster that MADE that claim, and the
-  // LATEST claim wins. Sleeper `x.adds` = { player_id: roster_id_that_added }. We record every completed
-  // FAAB add as {toRosterId, bid, ts} keyed by player, using the REAL ms timestamp (status_updated, else
-  // created) — NOT the week number, since week order isn't guaranteed chronological and a player can be
-  // claimed, dropped, and re-claimed by a different owner. The resolver then picks the most-recent bid
-  // whose toRosterId === the roster that CURRENTLY holds the player (so a prior owner's price can't leak).
+  // Replay completed acquisition events by player ID and timestamp. Waiver/free-agent adds reset
+  // salary; trades carry it. This uses all owners' events, including the price paid before a trade.
   const faabAdds = {};   // pid -> [{toRosterId, bid, ts}]
   txnsByWeek.forEach(txns => {
-    if(txns == null) return;
     for(const x of (txns||[])){
       if(x.status !== "complete") continue;
       const bid = x.settings && x.settings.waiver_bid;
@@ -1012,6 +1010,13 @@ function reconcileDestinations(){
   for(const [k,a] of TRADE_ASSETS){
     const others = TRADE_TEAMS.filter(x => x !== a.fromRid);
     if(!TRADE_TEAMS.includes(a.fromRid)){ TRADE_ASSETS.delete(k); continue; }
+    const source = teamByRid(a.fromRid);
+    const asset = a.kind === "player"
+      ? source.players.find(p => assetKindKey("p", p.pid) === k)
+      : source.picks.find(p => `k:${source.roster_id}:${p.ykey}` === k);
+    if(!asset){ TRADE_ASSETS.delete(k); continue; }
+    a.amt = a.kind === "player" ? asset.amt : 0;
+    a.label = a.kind === "player" ? asset.name : asset.label;
     if(a.toRid==null || !others.includes(a.toRid)) a.toRid = others.length ? others[0] : null;
   }
 }
@@ -1019,6 +1024,7 @@ function reconcileDestinations(){
 function renderTradeResult(){ try { renderTradeResultInner(); } finally { writeHash(); } }
 function renderTradeResultInner(){
   const box = document.getElementById("tradeResult"); if(!box) return;
+  if(!DATA_READY){ box.innerHTML = `<p class="empty" role="status">Trade cap results unavailable until a complete refresh succeeds.</p>`; return; }
   const teams = tradeTeamObjects();
   if(teams.length < 2){ box.innerHTML = `<p class="empty">Add at least two teams to build a trade.</p>`; return; }
 
@@ -1108,7 +1114,7 @@ function renderTradeResultInner(){
       <div class="bs-panel-head ts-head"><span class="ts-title">Busch Apple Trade</span><span class="ts-date">${esc(dateStr)}</span></div>
       <div class="ts-teams">${teamBlocks}</div>
       ${vLine}
-      <p class="ts-foot">Salaries via the league's audited resolver · picks $0${SHOW_CAP?` · cap $${CAP}`:""}</p>
+      <p class="ts-foot">Calculated salaries · picks $0${SHOW_CAP?` · cap $${CAP}`:""}. Cap check only; roster and contract rules are not checked.</p>
     </section>
     <div class="ts-actions"><button type="button" class="bs-btn" id="copyTradeBtn">Copy summary</button><button type="button" class="bs-btn" id="copyLinkBtn">Copy link</button><span class="copy-msg" id="copyMsg" role="status"></span></div>`;
   }
@@ -1127,6 +1133,7 @@ function renderTradeResultInner(){
 
 // plain-text trade summary for the clipboard (mirrors the visual summary)
 function buildTradeText(teams){
+  if(!DATA_READY) return "Trade cap results unavailable until a complete refresh succeeds.";
   const gives = {}, gets = {}; teams.forEach(t => { gives[t.roster_id]=[]; gets[t.roster_id]=[]; });
   for(const a of TRADE_ASSETS.values()){
     if(a.toRid==null) continue;
@@ -1150,6 +1157,7 @@ function buildTradeText(teams){
     lines.push("");
   });
   if(SHOW_CAP) lines.push(anyOver ? `Result: OVER CAP` : `Result: all teams under $${CAP}`);
+  lines.push("Cap check only; roster and contract rules are not checked.");
   return lines.join("\n").trim();
 }
 
@@ -1257,6 +1265,9 @@ wireTabs(TABLIST, selectTab);
 // ---- load + paint ----
 const START_HASH = location.hash.replace(/^#/, "");
 async function load(){
+  if(LOADING) return;
+  LOADING = true; DATA_READY = false;
+  renderTradeResult();
   const status = document.getElementById("status");
   const errbox = document.getElementById("errbox");
   errbox.innerHTML = ""; status.textContent = "Sleeper · loading…";
@@ -1267,12 +1278,17 @@ async function load(){
     for(const [k,a] of [...TRADE_ASSETS]) if(!teamByRid(a.fromRid)) TRADE_ASSETS.delete(k);
     reconcileDestinations();
     if(HASH_PENDING){ applyHash(START_HASH); HASH_PENDING = false; }   // first successful load: resolve link ids
+    DATA_READY = true;
     document.getElementById("sub").textContent = `Salary & trade tool · ${TEAMS.length} teams · ${SEASON}${SHOW_CAP?` · cap $${CAP}`:""}`;
     paintTable(); paintGrid(); paintTrade();
     status.textContent = `Sleeper · updated ${new Date().toLocaleTimeString([], {hour:"numeric", minute:"2-digit"})}`;
   }catch(e){
+    DATA_READY = false;
     errbox.innerHTML = `<div class="err" role="alert">Couldn't load: ${esc(e.message)}. Try Refresh.</div>`;
     status.textContent = "Sleeper · couldn't update";
+    renderTradeResult();
+  }finally{
+    LOADING = false;
   }
 }
 

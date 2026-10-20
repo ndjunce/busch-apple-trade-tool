@@ -1,7 +1,7 @@
 # Busch Apple — Salary & Trade Tool
 
 A standalone salary-cap and trade calculator for a 10-team fantasy football **salary dynasty** league. It pulls
-every roster, salary, and draft pick **live from the public Sleeper API on each load** — no manual data entry, no
+every roster and draft pick from the public Sleeper API on each load and **derives salaries from draft and transaction history** — no manual data entry, no
 spreadsheet upkeep. Self-contained `index.html`, vanilla JS, no build step, deployed on Vercel.
 
 **Live:** https://busch-apple-trade-tool.vercel.app/
@@ -16,19 +16,25 @@ spreadsheet upkeep. Self-contained `index.html`, vanilla JS, no build step, depl
   plus optional auto-refresh.
 
 ## Salary model
-Each player's salary is resolved by priority, verified player-by-player against the league's official auction sheet:
-1. **Auction price** — all auction drafts merged oldest-first, newest price wins (carryover dynasty).
-2. **FAAB winning bid** — the amount you won a player for becomes their salary.
-3. **Rookie draft slot** — mapped to the league's rookie salary scale.
-4. **$1 minimum** — free-agent pickups / undrafted.
+Start with the newest available auction price, otherwise the rookie draft slot's salary scale, otherwise $1.
+Replay completed acquisition events in timestamp order: a waiver claim resets salary to its winning bid,
+a free-agent pickup resets it to $1, and a trade carries the existing salary. This implements the owner's
+October 9, 2026 clarification; a prior owner's auction price does not survive a later free-agent pickup.
+Missing transaction or pick history stops the refresh and disables trade cap results until a complete retry succeeds.
+Refresh also removes selected trade assets no longer held by their source roster and updates retained salaries.
 
 The combined cap is **$365 auction budget + $150 in-season FAAB = $515 per team**. Draft picks are tradeable but
 carry $0 salary (their slot — and salary — is set by final standings, NFL-style, once the season ends).
+
+The result checks salary cap arithmetic only. It does not check roster limits, lineup needs, contract expiry,
+trade deadlines or fair value. The app has no contract-year records. Confirm any such rules separately.
 
 ## Tech
 - Single self-contained `index.html`, vanilla JavaScript, no framework, no build step.
 - Data: public Sleeper API (`api.sleeper.app`) only — no auth, no secrets. The player dictionary is cached in
   localStorage (24h TTL) to avoid re-downloading.
+- The displayed update time is the successful roster/history fetch time. Player names, positions and NFL teams
+  can come from the 24-hour dictionary cache; salaries are reconstructed, not an official Sleeper salary field.
 - Responsive: side-by-side columns on desktop, single-column stack on mobile.
 - Deployed as a static site on Vercel.
 

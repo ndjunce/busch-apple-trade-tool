@@ -1,0 +1,48 @@
+import fs from 'node:fs';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+const root=new URL('./',import.meta.url);
+const snapshot=JSON.parse(fs.readFileSync(new URL('salary-snapshot.json',root),'utf8'));
+const stub=()=>new Proxy(function(){},{get:(t,k)=>k==='querySelectorAll'?()=>[]:k===Symbol.toPrimitive?()=>'':stub(),set:()=>true,apply:()=>stub()});
+function setup(path){
+ const html=fs.readFileSync(new URL(path,root),'utf8');
+ const src=[...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].at(-1)[1].replace(/\nload\(\);\s*$/,'\n');
+ const elements=new Map();let failed='';
+ const c={fetch:async url=>{if(url===failed)return {ok:false,status:503};assert.ok(url in snapshot,url);return {ok:true,json:async()=>structuredClone(snapshot[url])}},console,setTimeout,clearTimeout,setInterval:()=>0,clearInterval(){},location:{hash:'',href:'http://localhost/',pathname:'/'},history:{replaceState(){}},localStorage:{getItem:()=>null,setItem(){},removeItem(){}},navigator:{clipboard:{writeText:async()=>{}}},matchMedia:()=>({matches:false,addEventListener(){}}),document:{getElementById:id=>{if(!elements.has(id))elements.set(id,stub());return elements.get(id)},querySelector:()=>stub(),querySelectorAll:()=>[],createElement:()=>stub(),addEventListener(){},documentElement:stub(),body:stub()},addEventListener(){}};c.window=c;vm.createContext(c);vm.runInContext(src+'\nglobalThis.audit={buildSalaries,load,reconcileDestinations,buildTradeText,buildPicksByRoster};',c);
+ return {c,fail:url=>failed=url,run:code=>vm.runInContext(code,c)};
+}
+const repaired=setup('../index.html');
+const teams=await repaired.c.audit.buildSalaries();assert.equal(teams.flatMap(t=>t.players).length,2);assert.equal(teams.reduce((n,t)=>n+t.picks.length,0),18);
+assert.equal(teams.find(t=>t.roster_id===1).total,30);
+for(const ending of ['/transactions/2','/traded_picks']){
+ repaired.fail(Object.keys(snapshot).find(u=>u.endsWith(ending)));
+ await assert.rejects(repaired.c.audit.buildSalaries(),/503/);
+ console.log('PASS missing history rejects: '+ending);
+}repaired.fail('');
+const week2=Object.keys(snapshot).find(u=>u.endsWith('/transactions/2'));
+const events=snapshot[week2];snapshot[week2]=null;
+await assert.rejects(repaired.c.audit.buildSalaries(),/Invalid list/);snapshot[week2]=events;
+console.log('PASS HTTP-200 null history rejected');
+snapshot[week2]=[...events,{type:'free_agent',status:'complete',adds:{p:1},status_updated:3},{type:'trade',status:'complete',adds:{p:2},status_updated:4}];
+assert.equal((await repaired.c.audit.buildSalaries()).find(t=>t.roster_id===1).total,1);
+snapshot[week2]=events;
+console.log('PASS free-agent reset after waiver and trade salary carry');
+repaired.run(`TEAMS=[{roster_id:1,owner:'A',total:100,players:[{pid:'stay',name:'Current',amt:40}],picks:[]},{roster_id:2,owner:'B',total:100,players:[],picks:[]}];TRADE_TEAMS=[1,2];TRADE_ASSETS.set('p:gone',{fromRid:1,toRid:2,kind:'player',amt:30,label:'Gone'});TRADE_ASSETS.set('p:stay',{fromRid:1,toRid:2,kind:'player',amt:10,label:'Old'});TRADE_ASSETS.set('k:1:2027-1-1',{fromRid:1,toRid:2,kind:'pick',amt:0,label:'Gone pick'});reconcileDestinations();`);
+assert.equal(repaired.run('TRADE_ASSETS.size'),1);assert.equal(repaired.run("TRADE_ASSETS.get('p:stay').amt"),40);assert.equal(repaired.run("TRADE_ASSETS.get('p:stay').label"),'Current');
+console.log('PASS reconciliation removes departed player/pick and refreshes retained salary/name');
+assert.match(repaired.c.audit.buildTradeText([]),/unavailable/);
+repaired.run('DATA_READY=true');
+const text=repaired.c.audit.buildTradeText(repaired.run('TEAMS'));
+assert.match(text,/\$100 -> \$60/);assert.match(text,/\$100 -> \$140/);
+console.log('PASS current selected amount used in summary and salary conserved');
+repaired.run('TEAMS[1].total=475');
+assert.match(repaired.c.audit.buildTradeText(repaired.run('TEAMS')),/\$475 -> \$515/);
+assert.doesNotMatch(repaired.c.audit.buildTradeText(repaired.run('TEAMS')),/Result: OVER CAP/);
+repaired.run('TEAMS[1].total=476');
+assert.match(repaired.c.audit.buildTradeText(repaired.run('TEAMS')),/Result: OVER CAP/);
+console.log('PASS exactly $515 permitted, $516 rejected');
+repaired.fail(Object.keys(snapshot).find(u=>u.endsWith('/transactions/2')));
+await repaired.c.audit.load();assert.equal(repaired.run('DATA_READY'),false);assert.equal(repaired.run('LOADING'),false);assert.match(repaired.c.audit.buildTradeText([]),/unavailable/);
+console.log('PASS failed refresh disables prior cap result and releases loading guard');
+const picks=repaired.c.audit.buildPicksByRoster([1,2],[{season:'2027',round:1,roster_id:1,owner_id:2}]);assert.equal(picks[1].length,8);assert.equal(picks[2].length,10);assert.equal(new Set([...picks[1],...picks[2]].map(x=>x.ykey)).size,18);
+console.log('PASS traded pick identity preserved without duplicates');

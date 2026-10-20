@@ -1,0 +1,90 @@
+{
+  "https://api.sleeper.app/v1/league/1372256037666574336/rosters": [
+    {
+      "roster_id": 1,
+      "owner_id": "one",
+      "players": [
+        "p"
+      ]
+    },
+    {
+      "roster_id": 2,
+      "owner_id": "two",
+      "players": [
+        "q"
+      ]
+    }
+  ],
+  "https://api.sleeper.app/v1/league/1372256037666574336/users": [
+    {
+      "user_id": "one",
+      "display_name": "A"
+    },
+    {
+      "user_id": "two",
+      "display_name": "B"
+    }
+  ],
+  "https://api.sleeper.app/v1/league/1372256037666574336/drafts": [
+    {
+      "type": "auction",
+      "draft_id": "fixture",
+      "start_time": 1
+    }
+  ],
+  "https://api.sleeper.app/v1/league/1372256037666574336/traded_picks": [],
+  "https://api.sleeper.app/v1/players/nfl": {
+    "p": {
+      "full_name": "First",
+      "position": "WR"
+    },
+    "q": {
+      "full_name": "Second",
+      "position": "RB"
+    }
+  },
+  "https://api.sleeper.app/v1/draft/fixture/picks": [
+    {
+      "player_id": "p",
+      "metadata": {
+        "amount": "13"
+      }
+    },
+    {
+      "player_id": "q",
+      "metadata": {
+        "amount": "5"
+      }
+    }
+  ],
+  "https://api.sleeper.app/v1/league/1372256037666574336/transactions/1": [],
+  "https://api.sleeper.app/v1/league/1372256037666574336/transactions/2": [
+    {
+      "type": "waiver",
+      "status": "complete",
+      "adds": {
+        "p": 1
+      },
+      "settings": {
+        "waiver_bid": 30
+      },
+      "status_updated": 2
+    }
+  ],
+  "https://api.sleeper.app/v1/league/1372256037666574336/transactions/3": [],
+  "https://api.sleeper.app/v1/league/1372256037666574336/transactions/4": [],
+  "https://api.sleeper.app/v1/league/1372256037666574336/transactions/5": [],
+  "https://api.sleeper.app/v1/league/1372256037666574336/transactions/6": [],
+  "https://api.sleeper.app/v1/league/1372256037666574336/transactions/7": [],
+  "https://api.sleeper.app/v1/league/1372256037666574336/transactions/8": [],
+  "https://api.sleeper.app/v1/league/1372256037666574336/transactions/9": [],
+  "https://api.sleeper.app/v1/league/1372256037666574336/transactions/10": [],
+  "https://api.sleeper.app/v1/league/1372256037666574336/transactions/11": [],
+  "https://api.sleeper.app/v1/league/1372256037666574336/transactions/12": [],
+  "https://api.sleeper.app/v1/league/1372256037666574336/transactions/13": [],
+  "https://api.sleeper.app/v1/league/1372256037666574336/transactions/14": [],
+  "https://api.sleeper.app/v1/league/1372256037666574336/transactions/15": [],
+  "https://api.sleeper.app/v1/league/1372256037666574336/transactions/16": [],
+  "https://api.sleeper.app/v1/league/1372256037666574336/transactions/17": [],
+  "https://api.sleeper.app/v1/league/1372256037666574336/transactions/18": []
+}
