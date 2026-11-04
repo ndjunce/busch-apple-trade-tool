@@ -183,6 +183,10 @@
   .ts-foot{color:var(--text-2);font-size:var(--fs-micro);margin:0;padding:0 var(--sp-3) var(--sp-3)}
   .ts-actions{display:flex;align-items:center;gap:var(--sp-2);flex-wrap:wrap;margin-top:var(--sp-3)}
   .copy-msg{color:var(--text-2);font-size:var(--fs-meta)}
+  @media(max-width:600px){
+    #tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%}
+    #tabs [role="tab"]{min-width:0;white-space:normal}
+  }
 </style>
 </head>
 <body>
@@ -205,6 +209,7 @@
       <button type="button" role="tab" id="tab-teams" data-key="teams" aria-controls="pane-table" aria-selected="false" tabindex="-1">Teams</button>
       <button type="button" role="tab" id="tab-grid"  data-key="grid"  aria-controls="pane-grid" aria-selected="true" tabindex="0">Salary Grid</button>
       <button type="button" role="tab" id="tab-trade" data-key="trade" aria-controls="pane-trade" aria-selected="false" tabindex="-1">Trade Builder</button>
+      <button type="button" role="tab" id="tab-picks" data-key="picks" aria-controls="pane-picks" aria-selected="false" tabindex="-1">Draft Picks</button>
     </div>
   </div>
 
@@ -213,8 +218,10 @@
   <div id="pane-table" class="hide" role="tabpanel" aria-labelledby="tab-teams" tabindex="0"><div class="loading">Loading…</div></div>
   <div id="pane-grid" role="tabpanel" aria-labelledby="tab-grid" tabindex="0"><div class="loading">Loading…</div></div>
   <div id="pane-trade" class="hide" role="tabpanel" aria-labelledby="tab-trade" tabindex="0"><div class="loading">Loading…</div></div>
+  <div id="pane-picks" class="hide" role="tabpanel" aria-labelledby="tab-picks" tabindex="0"><div class="loading">Loading…</div></div>
 </div>
 
+<script src="assets/draft-order.js"></script>
 <script>
 /* =============================================================================
    Busch Apple Salary & Trade Tool — standalone, public Sleeper API only.
@@ -237,6 +244,16 @@ const PLAYERS_KEY = "busch_players_nfl_v2", PLAYERS_TS = "busch_players_nfl_ts_v
 // future draft capital: every team starts with own 1st/2nd/3rd for these years (adjusted by traded_picks)
 const PICK_YEARS = [2027, 2028, 2029];
 const PICK_ROUNDS = [1, 2, 3];
+// Confirmed commissioner notice through Week 6 (2026): Henry's ORIGINAL 2029 third
+// is forfeited for repeated OUT starters. Sleeper still lists it; key by pick origin,
+// not current holder. Add only confirmed penalties here, never inferred violations.
+const FORFEITED_PICKS = {
+  "2029-3-10": { "originalRoster":10, "owner":"Henry", "label":"2029 3rd", "reason":"Repeated OUT starters in Weeks 5–6" }
+};
+function pickForfeitureNotice(rid){
+  const entries = Object.values(FORFEITED_PICKS).filter(p => rid == null || p.originalRoster === rid);
+  return entries.map(p => `<p class="tt-note"><strong>Forfeited:</strong> ${esc(p.owner)}'s original ${esc(p.label)} — ${esc(p.reason)}. Excluded from available picks and trades even if Sleeper still lists it.</p>`).join("");
+}
 function roundLabel(r){ return r===1?"1st":r===2?"2nd":r===3?"3rd":`${r}th`; }
 
 const ROOKIE_SCALE = {
@@ -260,6 +277,8 @@ const POS_ORDER = ["QB","RB","WR","TE","K","DEF","DL","LB","DB"];
 
 // ---- state ----
 let TEAMS = [];          // [{roster_id, owner, sn, avatar, players:[...], picks:[{year,round,label,key,fromRid}], total, room}]
+let RAW_ROSTERS = [];
+let LEAGUE_SETTINGS = {};
 let DATA_READY = false;  // cap results require a complete successful refresh
 let LOADING = false;
 let PLAYERS = null;
@@ -384,6 +403,7 @@ function buildPicksByRoster(rosterIds, tradedPicks){
   const ridOwnerName = {}; // filled by caller-independent map below via OWNER lookup at render; here we just keep origRid
   const out = {}; rosterIds.forEach(rid => out[rid] = []);
   for(const idKey in ownerOf){
+    if(FORFEITED_PICKS[idKey]) continue;
     const cur = ownerOf[idKey];
     const [y, r, origRid] = idKey.split("-").map(Number);
     if(!out[cur]) out[cur] = [];
@@ -396,12 +416,13 @@ function buildPicksByRoster(rosterIds, tradedPicks){
 
 // ---- build salaries + picks from live Sleeper (dollar logic identical to v1) ----
 async function buildSalaries(){
-  const [rosters, users, drafts, tradedPicks, players] = await Promise.all([
+  const [rosters, users, drafts, tradedPicks, players, league] = await Promise.all([
     list(`${API}/league/${LEAGUE_ID}/rosters`),
     list(`${API}/league/${LEAGUE_ID}/users`),
     list(`${API}/league/${LEAGUE_ID}/drafts`),
     list(`${API}/league/${LEAGUE_ID}/traded_picks`),
     loadPlayers(),
+    j(`${API}/league/${LEAGUE_ID}`),
   ]);
   PLAYERS = players;
   const uById = {}; users.forEach(u => uById[u.user_id] = u);
@@ -477,13 +498,21 @@ async function buildSalaries(){
     return { roster_id: r.roster_id, owner, sn, avatar, players: ps, picks: picksByRoster[r.roster_id] || [], total, room: CAP - total };
   }).sort((a,b) => b.total - a.total);
 
+  RAW_ROSTERS = rosters;
+  LEAGUE_SETTINGS = league.settings || {};
   return teams;
 }
 
 // ---- UI state added by the 2026-10 redesign (presentation only; no salary data) ----
 let GRID_COLOR = "both";        // Salary Grid color mode: "both" (default = production owner + position coloring) | "position" | "owner" | "none" (hash wins over localStorage)
 const TEAMS_SORT = { key:"room", dir:-1 };   // Teams cap table sort (memory only); room/-1 = over-cap first, then most room
-const PANE = { teams:"table", grid:"grid", trade:"trade" };  // hash key -> pane id suffix
+const PANE = { teams:"table", grid:"grid", trade:"trade", picks:"picks" };  // hash key -> pane id suffix
+function paintPicks(){
+  const el = document.getElementById("pane-picks");
+  el.innerHTML = window.BuschDraftOrder
+    ? window.BuschDraftOrder.render(TEAMS, RAW_ROSTERS, LEAGUE_SETTINGS, FORFEITED_PICKS)
+    : `<p class="empty">Draft pick view unavailable. Try Refresh.</p>`;
+}
 let HASH_PENDING = false;       // a start-up link hash is waiting for TEAMS before it can be fully applied
 let LAST_HASH = null;           // last hash written/applied (hashchange ignores our own writes)
 let HASH_NOTE = "";             // one-line note when shared-link trade assets were dropped
@@ -567,7 +596,7 @@ function capTable(){
   return (headline ? `<p class="cc-head ${over.length ? "bs-down" : "bs-up"}">${headline}</p>` : "")
     + `<div class="bs-panel"><div class="bs-table-wrap"><table class="bs-table bs-table--stick1 cap-table">
       <thead><tr><th class="view-cell">View</th>${th("owner","Owner")}${th("total","Total",1)}${SHOW_CAP ? th("room","Room",1) : ""}${th("players","Players",1)}${th("picks","Picks",1)}</tr></thead>
-      <tbody>${body}</tbody></table></div></div>`;
+      <tbody>${body}</tbody></table></div></div>` + pickForfeitureNotice();
 }
 
 // ---- Teams tab roster panel ----
@@ -934,6 +963,7 @@ function paintTrade(){
 
     panels += `<section class="bs-panel side" aria-label="${esc(t.owner)}">
       <div class="bs-panel-head">${avatarImg(t,"oav")}<span class="bs-h2">${esc(t.owner)}</span><span class="side-tot">$${t.total}${SHOW_CAP?` / ${CAP}`:``}</span></div>
+      ${pickForfeitureNotice(rid)}
       <div class="side-ctrls">
         <input class="bs-input" type="search" placeholder="Search players" aria-label="Search ${esc(t.owner)}'s players" data-searchrid="${rid}" value="${esc(ui.q||"")}">
         <select class="bs-select" data-filterrid="${rid}" aria-label="Filter ${esc(t.owner)}'s players by position">${fposOpts}</select>
@@ -1211,6 +1241,7 @@ function applyHash(raw){
   selectTab(tab);
 }
 function hashString(){
+  if(ACTIVE_TAB === "picks") return "picks";
   if(ACTIVE_TAB === "teams"){
     if(SELECTED.has("__ALL__")) return "teams/all";
     return SELECTED.size ? "teams/" + [...SELECTED].join(".") : "teams";
@@ -1280,7 +1311,7 @@ async function load(){
     if(HASH_PENDING){ applyHash(START_HASH); HASH_PENDING = false; }   // first successful load: resolve link ids
     DATA_READY = true;
     document.getElementById("sub").textContent = `Salary & trade tool · ${TEAMS.length} teams · ${SEASON}${SHOW_CAP?` · cap $${CAP}`:""}`;
-    paintTable(); paintGrid(); paintTrade();
+    paintTable(); paintGrid(); paintTrade(); paintPicks();
     status.textContent = `Sleeper · updated ${new Date().toLocaleTimeString([], {hour:"numeric", minute:"2-digit"})}`;
   }catch(e){
     DATA_READY = false;
@@ -1300,7 +1331,7 @@ window.addEventListener("hashchange", () => {
   const h = location.hash.replace(/^#/, "");
   if(h === LAST_HASH) return;
   applyHash(h);
-  if(TEAMS.length){ paintTable(); paintGrid(); paintTrade(); }
+  if(TEAMS.length){ paintTable(); paintGrid(); paintTrade(); paintPicks(); }
 });
 
 // ---- theme: System -> Light -> Dark (localStorage "bs-theme") ----

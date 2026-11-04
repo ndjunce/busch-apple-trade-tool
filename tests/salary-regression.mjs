@@ -46,3 +46,29 @@ await repaired.c.audit.load();assert.equal(repaired.run('DATA_READY'),false);ass
 console.log('PASS failed refresh disables prior cap result and releases loading guard');
 const picks=repaired.c.audit.buildPicksByRoster([1,2],[{season:'2027',round:1,roster_id:1,owner_id:2}]);assert.equal(picks[1].length,8);assert.equal(picks[2].length,10);assert.equal(new Set([...picks[1],...picks[2]].map(x=>x.ykey)).size,18);
 console.log('PASS traded pick identity preserved without duplicates');
+
+const leaguePicks=repaired.c.audit.buildPicksByRoster(Array.from({length:10},(_,i)=>i+1),[]);
+assert.equal(Object.values(leaguePicks).flat().length,89);
+assert.equal(leaguePicks[10].length,8);
+assert.ok(!Object.values(leaguePicks).flat().some(p=>p.ykey==='2029-3-10'));
+const movedPicks=repaired.c.audit.buildPicksByRoster([2,8,10],[
+ {season:'2029',round:3,roster_id:10,owner_id:8},
+ {season:'2029',round:3,roster_id:2,owner_id:10}
+]);
+assert.ok(!Object.values(movedPicks).flat().some(p=>p.ykey==='2029-3-10'));
+assert.ok(movedPicks[10].some(p=>p.ykey==='2029-3-2'));
+assert.ok(movedPicks[10].some(p=>p.ykey==='2028-3-10'));
+assert.ok(movedPicks[10].some(p=>p.ykey==='2029-2-10'));
+assert.match(repaired.run('pickForfeitureNotice(10)'),/Henry.*2029 3rd/);
+assert.equal(repaired.run('pickForfeitureNotice(8)'),'');
+console.log('PASS only Henry original 2029 third excluded, regardless of current holder; acquired thirds retained');
+
+repaired.run(`TEAMS=[8,10].map(rid=>({roster_id:rid,owner:String(rid),total:100,players:[],picks:buildPicksByRoster([8,10],[])[rid]}));applyHash('#trade/8.10/k2029-3-10~8,k2028-3-10~8');`);
+assert.equal(repaired.run('TRADE_ASSETS.size'),1);
+assert.equal(repaired.run("TRADE_ASSETS.has('k:10:2029-3-10')"),false);
+assert.equal(repaired.run("TRADE_ASSETS.has('k:10:2028-3-10')"),true);
+assert.match(repaired.run('HASH_NOTE'),/1 pick.*no longer/);
+repaired.run(`TRADE_ASSETS.set('k:10:2029-3-10',{fromRid:10,toRid:8,kind:'pick',amt:0,label:'Forfeited pick'});reconcileDestinations();`);
+assert.equal(repaired.run("TRADE_ASSETS.has('k:10:2029-3-10')"),false);
+assert.doesNotMatch(repaired.c.audit.buildTradeText(repaired.run('TEAMS')),/Forfeited pick/);
+console.log('PASS shared links and refresh cannot restore forfeited pick into a trade or copied summary');

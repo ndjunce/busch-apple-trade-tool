@@ -86,5 +86,12 @@
   "https://api.sleeper.app/v1/league/1372256037666574336/transactions/15": [],
   "https://api.sleeper.app/v1/league/1372256037666574336/transactions/16": [],
   "https://api.sleeper.app/v1/league/1372256037666574336/transactions/17": [],
-  "https://api.sleeper.app/v1/league/1372256037666574336/transactions/18": []
+  "https://api.sleeper.app/v1/league/1372256037666574336/transactions/18": [],
+  "https://api.sleeper.app/v1/league/1372256037666574336": {
+    "league_id": "1372256037666574336",
+    "season": "2026",
+    "settings": {
+      "playoff_teams": 6
+    }
+  }
 }

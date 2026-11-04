@@ -1,0 +1,46 @@
+name: Busch trade alerts (ntfy)
+
+on:
+  schedule:
+    - cron: '2-57/5 * * * *'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Initialize once, check for new trades, or dry-run without sending'
+        type: choice
+        options: [dry-run, initialize, check]
+        default: dry-run
+
+permissions:
+  contents: write
+
+concurrency:
+  group: busch-trade-alerts
+  cancel-in-progress: false
+
+jobs:
+  check:
+    if: vars.BUSCH_TRADE_ALERTS_ENABLED == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            index.html
+            scripts
+          sparse-checkout-cone-mode: false
+      - name: Check processed trades
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          GH_TOKEN: ${{ github.token }}
+          BUSCH_TRADE_ALERTS_ENABLED: ${{ vars.BUSCH_TRADE_ALERTS_ENABLED }}
+          MODE: ${{ inputs.mode }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$MODE" in
+            initialize) python3 scripts/notify_trades.py --initialize ;;
+            dry-run) python3 scripts/notify_trades.py --dry-run ;;
+            *) python3 scripts/notify_trades.py ;;
+          esac
