@@ -1,0 +1,49 @@
+{
+  "health": "ok",
+  "initialized_at": "2026-11-04T17:12:37.012403+00:00",
+  "league": "1372256037666574336",
+  "schema": 1,
+  "seen": {
+    "1372426587395325952": {
+      "phase": "baseline",
+      "signature": "c89f361f7264c128270e5d66aa93678ee9274316b89058e39f6ec49b6e3a3b37"
+    },
+    "1372624420048220160": {
+      "phase": "baseline",
+      "signature": "947040ac6eac51706a39331cf1d3934d6cd5d706ab89227123b58e38c5a7b01c"
+    },
+    "1406822085841432576": {
+      "phase": "baseline",
+      "signature": "dde2b8047db7f0c05ef77139837d62776ae332f524c4afb95cfffbe9cd1748bf"
+    },
+    "1410849809509720064": {
+      "phase": "baseline",
+      "signature": "a9440cef42f53fb76034d098c9140408a0a84940dacf8a11b156b46b1718b8f6"
+    },
+    "1411134883761283072": {
+      "phase": "baseline",
+      "signature": "29ef7f0af3b63c23b25f37304ac6238e89cc1adae45497da6c28883264fe9706"
+    },
+    "1411153784008101888": {
+      "phase": "baseline",
+      "signature": "7c3aa6336664120ac4df67be34099af485097c835d9c0564bc2854ee7d76e426"
+    },
+    "1411161378860912640": {
+      "phase": "baseline",
+      "signature": "98b562d0ef9a2be6ef8fc3de4c510736103f747e89d32d5848d5a8f73ac996df"
+    },
+    "1415751990566297600": {
+      "phase": "baseline",
+      "signature": "db3a4fb8fd91109ad76732096566c7f37c9adc611aa9c3acd3d150e1ce1e679a"
+    },
+    "1415765063205163008": {
+      "phase": "baseline",
+      "signature": "869a68b746ad70085bb37c022c5867658175f0a6d1e5fd593547836178827341"
+    },
+    "1421686099297816576": {
+      "phase": "baseline",
+      "signature": "36dcc02efde7e51f6459d03a62074648b2af16cd46ee5f3a0955bec1ae7fe227"
+    }
+  },
+  "startup_confirmed": false
+}
