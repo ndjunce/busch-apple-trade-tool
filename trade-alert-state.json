@@ -43,6 +43,10 @@
     "1421686099297816576": {
       "phase": "baseline",
       "signature": "36dcc02efde7e51f6459d03a62074648b2af16cd46ee5f3a0955bec1ae7fe227"
+    },
+    "1425643897807212544": {
+      "phase": "verified",
+      "signature": "2b68101b74e63a591321a2fe82cea16ddcc828db5fb444da35799ca5a9240291"
     }
   },
   "startup_confirmed": true
